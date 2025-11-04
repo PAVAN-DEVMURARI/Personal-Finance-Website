@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState } from 'react';
 import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -78,44 +78,46 @@ export default function InvestmentsPage() {
                         <CardDescription>A detailed view of your current investments with AI-powered advice.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Type</TableHead>
-                                    <TableHead>Monthly Change</TableHead>
-                                    <TableHead>AI Advice</TableHead>
-                                    <TableHead className="text-right">Value</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {investments.map((inv) => (
-                                    <TableRow key={inv.id}>
-                                        <TableCell className="font-medium">{inv.name}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{inv.type}</Badge>
-                                        </TableCell>
-                                        <TableCell className={cn("flex items-center gap-1", inv.monthlyChange >= 0 ? 'text-green-500' : 'text-red-500')}>
-                                            {inv.monthlyChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                                            {inv.monthlyChange}%
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name)} disabled={advice[inv.id]?.isPending}>
-                                                {advice[inv.id]?.isPending ? (
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                ) : (
-                                                    <BrainCircuit className="mr-2 h-4 w-4" />
-                                                )}
-                                                Get Advice
-                                            </Button>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {inv.value.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                        </TableCell>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Monthly Change</TableHead>
+                                        <TableHead>AI Advice</TableHead>
+                                        <TableHead className="text-right">Value</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {investments.map((inv) => (
+                                        <TableRow key={inv.id}>
+                                            <TableCell className="font-medium">{inv.name}</TableCell>
+                                            <TableCell>
+                                                <Badge variant="outline">{inv.type}</Badge>
+                                            </TableCell>
+                                            <TableCell className={cn("flex items-center gap-1", inv.monthlyChange >= 0 ? 'text-green-500' : 'text-red-500')}>
+                                                {inv.monthlyChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                                {inv.monthlyChange}%
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name)} disabled={advice[inv.id]?.isPending}>
+                                                    {advice[inv.id]?.isPending ? (
+                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <BrainCircuit className="mr-2 h-4 w-4" />
+                                                    )}
+                                                    Get Advice
+                                                </Button>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                {inv.value.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                     </CardContent>
                 </Card>
 
