@@ -1,3 +1,5 @@
+'use client';
+
 import { Target } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -24,8 +26,8 @@ export function GoalsOverview() {
               </div>
               <Progress value={progress} aria-label={`${goal.name} progress`} />
               <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{goal.currentAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                <span>Target: {goal.targetAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                <span>{goal.currentAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
+                <span>Target: {goal.targetAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
               </div>
               <div className="text-xs text-muted-foreground">
                 Deadline: {format(new Date(goal.deadline), "MMMM d, yyyy")}

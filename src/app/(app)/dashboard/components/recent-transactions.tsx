@@ -1,3 +1,5 @@
+'use client';
+
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { transactions } from "@/lib/data";
-import { CategoryIcon } from "@/components/category-icon";
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -73,7 +74,7 @@ export function RecentTransactions() {
                   {format(new Date(transaction.date), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell className="text-right">
-                  {transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                  {transaction.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                 </TableCell>
               </TableRow>
             ))}

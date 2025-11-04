@@ -1,16 +1,16 @@
 'use client';
 
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from '@/components/ui/chart';
 
 const chartData = [
-    { month: 'January', income: 186, expenses: 80 },
-    { month: 'February', income: 305, expenses: 200 },
-    { month: 'March', income: 237, expenses: 120 },
-    { month: 'April', income: 73, expenses: 190 },
-    { month: 'May', income: 209, expenses: 130 },
-    { month: 'June', income: 214, expenses: 140 },
+    { month: 'January', income: 155000, expenses: 67000 },
+    { month: 'February', income: 254000, expenses: 167000 },
+    { month: 'March', income: 197500, expenses: 100000 },
+    { month: 'April', income: 60800, expenses: 158000 },
+    { month: 'May', income: 174000, expenses: 108000 },
+    { month: 'June', income: 178000, expenses: 117000 },
 ];
 
 const chartConfig = {
@@ -42,9 +42,21 @@ export function IncomeExpenseSummary() {
                             axisLine={false}
                             tickFormatter={(value) => value.slice(0, 3)}
                         />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar dataKey="income" fill="var(--color-income)" radius={4} />
-                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
+                         <YAxis
+                            tickFormatter={(value) => `₹${Number(value) / 1000}k`}
+                        />
+                        <ChartTooltip 
+                            content={<ChartTooltipContent 
+                                formatter={(value, name) => (
+                                    <div className="flex flex-col">
+                                        <span className="capitalize">{name}</span>
+                                        <span className="font-bold">{Number(value).toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 })}</span>
+                                    </div>
+                                )}
+                            />} 
+                        />
+                        <Bar dataKey="income" radius={4} />
+                        <Bar dataKey="expenses" radius={4} />
                     </BarChart>
                 </ChartContainer>
             </CardContent>

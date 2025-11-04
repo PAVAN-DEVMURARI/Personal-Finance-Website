@@ -1,3 +1,5 @@
+'use client';
+
 import { PlusCircle } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -30,8 +32,8 @@ export default function GoalsPage() {
                             <CardContent className="space-y-2">
                                 <Progress value={progress} />
                                 <div className="flex justify-between text-sm text-muted-foreground">
-                                    <span>{goal.currentAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
-                                    <span>{goal.targetAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</span>
+                                    <span>{goal.currentAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
+                                    <span>{goal.targetAmount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</span>
                                 </div>
                             </CardContent>
                             <CardFooter>

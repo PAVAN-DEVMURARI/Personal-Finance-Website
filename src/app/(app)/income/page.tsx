@@ -1,3 +1,5 @@
+'use client';
+
 import { PlusCircle } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -45,7 +47,7 @@ export default function IncomePage() {
                                     </TableCell>
                                     <TableCell>{format(new Date(income.date), 'MMM d, yyyy')}</TableCell>
                                     <TableCell className="text-right">
-                                        {income.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                        {income.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                                     </TableCell>
                                 </TableRow>
                             ))}

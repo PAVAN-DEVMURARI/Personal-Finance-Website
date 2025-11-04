@@ -1,3 +1,5 @@
+'use client';
+
 import { PlusCircle, TrendingUp, TrendingDown } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
@@ -29,7 +31,7 @@ export default function InvestmentsPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-4xl font-bold font-headline">
-                            {totalInvestments.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                            {totalInvestments.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                         </p>
                         <p className="text-sm text-muted-foreground">+5.4% all time</p>
                     </CardContent>
@@ -62,7 +64,7 @@ export default function InvestmentsPage() {
                                             {inv.monthlyChange}%
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            {inv.value.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                                            {inv.value.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
                                         </TableCell>
                                     </TableRow>
                                 ))}

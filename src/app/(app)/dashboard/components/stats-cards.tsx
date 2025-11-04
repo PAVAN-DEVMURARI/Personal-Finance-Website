@@ -1,3 +1,5 @@
+'use client';
+
 import { ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { transactions } from "@/lib/data";
@@ -27,7 +29,7 @@ export function StatsCards() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {stat.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+              {stat.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
             </div>
             <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>

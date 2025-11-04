@@ -34,26 +34,26 @@ export type Badge = {
 };
 
 export const transactions: Transaction[] = [
-  { id: '1', type: 'expense', category: 'Food', description: 'Dinner with friends', amount: 55.00, date: '2024-07-28' },
-  { id: '2', type: 'income', category: 'Salary', description: 'July Salary', amount: 2500.00, date: '2024-07-25' },
-  { id: '3', type: 'expense', category: 'Travel', description: 'Flight to SF', amount: 350.00, date: '2024-07-22' },
-  { id: '4', type: 'expense', category: 'Rent', description: 'August Rent', amount: 800.00, date: '2024-07-20' },
-  { id: '5', type: 'expense', category: 'Shopping', description: 'New shoes', amount: 120.00, date: '2024-07-18' },
-  { id: '6', type: 'income', category: 'Freelance', description: 'Web design project', amount: 500.00, date: '2024-07-15' },
-  { id: '7', type: 'expense', category: 'Entertainment', description: 'Movie tickets', amount: 25.00, date: '2024-07-12' },
+  { id: '1', type: 'expense', category: 'Food', description: 'Dinner with friends', amount: 4500, date: '2024-07-28' },
+  { id: '2', type: 'income', category: 'Salary', description: 'July Salary', amount: 208000, date: '2024-07-25' },
+  { id: '3', type: 'expense', category: 'Travel', description: 'Flight to SF', amount: 29000, date: '2024-07-22' },
+  { id: '4', type: 'expense', category: 'Rent', description: 'August Rent', amount: 67000, date: '2024-07-20' },
+  { id: '5', type: 'expense', category: 'Shopping', description: 'New shoes', amount: 10000, date: '2024-07-18' },
+  { id: '6', type: 'income', category: 'Freelance', description: 'Web design project', amount: 41500, date: '2024-07-15' },
+  { id: '7', type: 'expense', category: 'Entertainment', description: 'Movie tickets', amount: 2000, date: '2024-07-12' },
 ];
 
 export const goals: Goal[] = [
-  { id: '1', name: 'Vacation to Japan', targetAmount: 4000, currentAmount: 1800, deadline: '2025-06-01' },
-  { id: '2', name: 'New Laptop', targetAmount: 1500, currentAmount: 1450, deadline: '2024-08-30' },
-  { id: '3', name: 'Emergency Fund', targetAmount: 5000, currentAmount: 3200, deadline: '2025-01-01' },
+  { id: '1', name: 'Vacation to Japan', targetAmount: 332000, currentAmount: 150000, deadline: '2025-06-01' },
+  { id: '2', name: 'New Laptop', targetAmount: 125000, currentAmount: 120000, deadline: '2024-08-30' },
+  { id: '3', name: 'Emergency Fund', targetAmount: 415000, currentAmount: 266000, deadline: '2025-01-01' },
 ];
 
 export const investments: Investment[] = [
-    { id: '1', name: 'Vanguard S&P 500 ETF', type: 'ETFs', value: 5200, monthlyChange: 2.5 },
-    { id: '2', name: 'Bitcoin', type: 'Crypto', value: 2100, monthlyChange: -5.2 },
-    { id: '3', name: 'Fidelity Blue Chip Growth', type: 'Mutual Funds', value: 7800, monthlyChange: 1.8 },
-    { id: '4', name: 'Apple Inc.', type: 'Stocks', value: 3500, monthlyChange: 7.1 },
+    { id: '1', name: 'Vanguard S&P 500 ETF', type: 'ETFs', value: 432000, monthlyChange: 2.5 },
+    { id: '2', name: 'Bitcoin', type: 'Crypto', value: 175000, monthlyChange: -5.2 },
+    { id: '3', name: 'Fidelity Blue Chip Growth', type: 'Mutual Funds', value: 650000, monthlyChange: 1.8 },
+    { id: '4', name: 'Apple Inc.', type: 'Stocks', value: 290000, monthlyChange: 7.1 },
 ];
 
 export const badges: Badge[] = [
