@@ -5,6 +5,7 @@ import { Lightbulb, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { generateFinancialTip, type FinancialTipOutput } from '@/ai/flows/personalized-financial-tips';
+import { goals, investments, transactions } from '@/lib/data';
 
 const initialTip = {
     tip: "Log your expenses daily to get a clear picture of where your money goes. Small leaks can sink a great ship!"
@@ -16,9 +17,26 @@ export function FinancialTipCard() {
 
   const handleGetNewTip = () => {
     startTransition(async () => {
+      // In a real app, you'd fetch this data dynamically.
+      // For now, we'll calculate it from mock data.
+      const currentMonthSpending = transactions
+        .filter((t) => t.type === 'expense' && new Date(t.date).getMonth() === new Date().getMonth())
+        .reduce((sum, t) => sum + t.amount, 0);
+      
+      const previousMonthSpending = 85000; // Mocked for comparison
+      
+      const totalSavings = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+      
+      const totalInvestmentValue = investments.reduce((sum, inv) => sum + inv.value, 0);
+      const totalPreviousValue = investments.reduce((sum, inv) => sum + (inv.value / (1 + inv.monthlyChange / 100)), 0);
+      const overallInvestmentPerformance = ((totalInvestmentValue - totalPreviousValue) / totalPreviousValue) * 100;
+
       const result = await generateFinancialTip({
-        spendingHabits: 'User spends a lot on dining out and travel.',
-        financialGoals: 'User wants to save for a down payment on a house.',
+        currentMonthSpending,
+        previousMonthSpending,
+        savings: totalSavings,
+        investmentPerformance: `${overallInvestmentPerformance.toFixed(2)}%`,
+        financialGoals: 'User wants to save for a down payment on a house and build an emergency fund.',
       });
       setTip(result);
     });

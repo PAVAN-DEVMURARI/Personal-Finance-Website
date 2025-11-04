@@ -12,9 +12,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const FinancialTipInputSchema = z.object({
-  spendingHabits: z
-    .string()
-    .describe('Description of the user spending habits.'),
+  currentMonthSpending: z.number().describe('Total spending for the current month.'),
+  previousMonthSpending: z.number().describe('Total spending for the previous month.'),
+  savings: z.number().describe('Total savings amount.'),
+  investmentPerformance: z.string().describe('Performance of investments (e.g., "+2.5%").'),
   financialGoals: z.string().describe('Description of the user financial goals.'),
 });
 export type FinancialTipInput = z.infer<typeof FinancialTipInputSchema>;
@@ -34,9 +35,14 @@ const prompt = ai.definePrompt({
   output: {schema: FinancialTipOutputSchema},
   prompt: `You are a financial advisor providing personalized tips to users.
 
-  Based on the user's spending habits and financial goals, generate a concise and actionable financial tip.
+  Based on the user's financial data, generate a concise and actionable financial tip.
+  If the user has saved money compared to last month, congratulate them.
+  Your tip should be encouraging and provide a specific, actionable insight.
 
-  Spending Habits: {{{spendingHabits}}}
+  Current Month Spending: {{{currentMonthSpending}}}
+  Previous Month Spending: {{{previousMonthSpending}}}
+  Total Savings: {{{savings}}}
+  Investment Performance: {{{investmentPerformance}}}
   Financial Goals: {{{financialGoals}}}
 
   Tip:`,
