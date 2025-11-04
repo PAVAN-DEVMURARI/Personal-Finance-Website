@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Award, Pizza, Plane, Home, ShoppingCart, Clapperboard, Shirt, BrainCircuit, Dumbbell } from "lucide-react";
+import { Award, Pizza, Plane, Home, ShoppingCart, Clapperboard, Shirt, BrainCircuit, Dumbbell, Wallet } from "lucide-react";
 
 export type Transaction = {
   id: string;
