@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { BrainCircuit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle , CardFooter } from "@/components/ui/card";
 import { generateMonthlyReport, type MonthlyReportInput, type MonthlyReportOutput } from "@/ai/flows/monthly-ai-financial-report";
 import { transactions, investments } from "@/lib/data";
 import { Separator } from "@/components/ui/separator";

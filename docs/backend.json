@@ -1,0 +1,351 @@
+{
+  "entities": {
+    "UserProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "UserProfile",
+      "type": "object",
+      "description": "Represents a user's profile in the FinPower application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the UserProfile entity."
+        },
+        "email": {
+          "type": "string",
+          "description": "User's email address.",
+          "format": "email"
+        },
+        "firstName": {
+          "type": "string",
+          "description": "User's first name."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "User's last name."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user profile was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "createdAt"
+      ]
+    },
+    "Expense": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Expense",
+      "type": "object",
+      "description": "Represents an expense record for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Expense entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Expense)"
+        },
+        "categoryId": {
+          "type": "string",
+          "description": "Reference to Category. (Relationship: Category 1:N Expense)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the expense."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the expense."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the expense.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "categoryId",
+        "amount",
+        "date"
+      ]
+    },
+    "Income": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Income",
+      "type": "object",
+      "description": "Represents an income record for a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Income entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Income)"
+        },
+        "source": {
+          "type": "string",
+          "description": "The source of the income (e.g., salary, investment)."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the income."
+        },
+        "date": {
+          "type": "string",
+          "description": "The date the income was received.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "source",
+        "amount",
+        "date"
+      ]
+    },
+    "SavingsGoal": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SavingsGoal",
+      "type": "object",
+      "description": "Represents a savings goal set by a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SavingsGoal entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N SavingsGoal)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the savings goal (e.g., 'New Car', 'Vacation')."
+        },
+        "targetAmount": {
+          "type": "number",
+          "description": "The target amount to be saved."
+        },
+        "dueDate": {
+          "type": "string",
+          "description": "The date by which the goal should be achieved.",
+          "format": "date-time"
+        },
+        "savedAmount": {
+          "type": "number",
+          "description": "The amount currently saved towards the goal."
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "name",
+        "targetAmount",
+        "dueDate",
+        "savedAmount"
+      ]
+    },
+    "Category": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Category",
+      "type": "object",
+      "description": "Represents a category for expenses (e.g., Food, Travel, Rent).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Category entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the category."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the category."
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Investment": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Investment",
+      "type": "object",
+      "description": "Represents a user's investment.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Investment entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile. (Relationship: UserProfile 1:N Investment)"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of investment (e.g., mutual fund, stock, ETF, crypto)."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or ticker symbol of the investment."
+        },
+        "quantity": {
+          "type": "number",
+          "description": "The number of shares or units owned."
+        },
+        "purchasePrice": {
+          "type": "number",
+          "description": "The price at which the investment was purchased."
+        },
+        "purchaseDate": {
+          "type": "string",
+          "description": "The date the investment was purchased.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "type",
+        "name",
+        "quantity",
+        "purchasePrice",
+        "purchaseDate"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}/profile",
+        "definition": {
+          "entityName": "UserProfile",
+          "schema": {
+            "$ref": "#/backend/entities/UserProfile"
+          },
+          "description": "Stores user profile information. Accessible only to the user with the matching userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching the Firebase Auth UID."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/expenses/{expenseId}",
+        "definition": {
+          "entityName": "Expense",
+          "schema": {
+            "$ref": "#/backend/entities/Expense"
+          },
+          "description": "Stores expense records for a specific user. Accessible only to the user with the matching userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching the Firebase Auth UID."
+            },
+            {
+              "name": "expenseId",
+              "description": "The unique ID of the expense record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/income/{incomeId}",
+        "definition": {
+          "entityName": "Income",
+          "schema": {
+            "$ref": "#/backend/entities/Income"
+          },
+          "description": "Stores income records for a specific user. Accessible only to the user with the matching userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching the Firebase Auth UID."
+            },
+            {
+              "name": "incomeId",
+              "description": "The unique ID of the income record."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/savingsGoals/{savingsGoalId}",
+        "definition": {
+          "entityName": "SavingsGoal",
+          "schema": {
+            "$ref": "#/backend/entities/SavingsGoal"
+          },
+          "description": "Stores savings goals for a specific user. Accessible only to the user with the matching userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching the Firebase Auth UID."
+            },
+            {
+              "name": "savingsGoalId",
+              "description": "The unique ID of the savings goal."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/categories/{categoryId}",
+        "definition": {
+          "entityName": "Category",
+          "schema": {
+            "$ref": "#/backend/entities/Category"
+          },
+          "description": "Stores expense categories. Global read access, but write access may be restricted to admins.",
+          "params": [
+            {
+              "name": "categoryId",
+              "description": "The unique ID of the category."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/investments/{investmentId}",
+        "definition": {
+          "entityName": "Investment",
+          "schema": {
+            "$ref": "#/backend/entities/Investment"
+          },
+          "description": "Stores investment data for a specific user. Accessible only to the user with the matching userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching the Firebase Auth UID."
+            },
+            {
+              "name": "investmentId",
+              "description": "The unique ID of the investment."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, DBAC, and support secure list operations (QAPs). User data is segregated to ensure that each collection has a homogeneous security posture.\n\n1.  **User Profiles:** User profiles are stored in a path-based structure under `/users/{userId}/profile`. This ensures that only the authenticated user can access their profile data. No denormalization is required as access is determined solely by the path.\n2.  **Expenses, Income, SavingsGoals, Investments:**  These entities are stored as subcollections under the user's profile (e.g., `/users/{userId}/expenses/{expenseId}`). This enforces clear ownership. Access is determined by the `userId` in the path, ensuring Authorization Independence. Since these collections are user-specific and path-based, no further denormalization is required for authorization.\n3.  **Categories:** Categories are stored in a top-level collection `/categories`.  To manage access, we could implement a `members` map with roles, but this isn't strictly necessary given the application details.  It's assumed these are global.\n\nThis structure achieves Authorization Independence by avoiding `get()` calls in the rules. The path-based ownership model for user-specific data (`/users/{userId}/*`) makes it easy to write security rules that only allow authenticated users to access their own data. The segregation of data into user-specific subcollections supports the QAPs by enabling secure list operations; a user can only list the documents within their own subcollections."
+  }
+}

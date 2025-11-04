@@ -1,0 +1,134 @@
+/**
+ * @fileoverview Firestore Security Rules for FinPower application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for personal financial data
+ * and allows public read access to categories. Write access to categories is not restricted,
+ * as we assume they are global.
+ *
+ * Data Structure:
+ * - User profiles and associated data (expenses, income, savings goals, investments)
+ *   are nested under /users/{userId}, ensuring data isolation.
+ * - Categories are stored in a top-level /categories collection.
+ *
+ * Key Security Decisions:
+ * - User listing is implicitly denied (no top-level /users collection).
+ * - All data nested under a user ID is accessible only to that user.
+ * - Categories are publicly readable.
+ *
+ * Denormalization for Authorization:
+ *  - Not used: Path-based rules eliminate the need for data denormalization.
+ *
+ * Structural Segregation:
+ *  - User-specific data is stored in private subcollections under /users/{userId},
+ *    while categories are in a public top-level collection.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Enforces access control for user profiles. Only the authenticated user can read and write their own profile.
+     * @path /users/{userId}/profile
+     * @allow (create, update, delete, get, list) - User with UID 'user123' can create/update/delete/get their own profile at /users/user123/profile.
+     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access profile at /users/user123/profile.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/profile {
+      // Allow reads/writes if the user is signed in and the requested userId
+      // matches the authenticated user's ID.
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false; // Listing user profiles is not permitted.
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.id == userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for user expenses. Only the authenticated user can manage their own expenses.
+     * @path /users/{userId}/expenses/{expenseId}
+     * @allow (create, update, delete, get, list) - User with UID 'user123' can create/update/delete/get their own expense at /users/user123/expenses/expense001.
+     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access expense at /users/user123/expenses/expense001.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/expenses/{expenseId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.userProfileId == userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for user income. Only the authenticated user can manage their own income records.
+     * @path /users/{userId}/income/{incomeId}
+     * @allow (create, update, delete, get, list) - User with UID 'user123' can create/update/delete/get their own income at /users/user123/income/income001.
+     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access income at /users/user123/income/income001.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/income/{incomeId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.userProfileId == userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Enforces access control for user savings goals. Only the authenticated user can manage their own savings goals.
+     * @path /users/{userId}/savingsGoals/{savingsGoalId}
+     * @allow (create, update, delete, get, list) - User with UID 'user123' can create/update/delete/get their own savings goal at /users/user123/savingsGoals/goal001.
+     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access savings goal at /users/user123/savingsGoals/goal001.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/savingsGoals/{savingsGoalId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.userProfileId == userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    /**
+     * @description Provides public read access to categories. Write access can be configured for admins if needed.
+     * @path /categories/{categoryId}
+     * @allow (get, list) - Any user, authenticated or not, can read any category.
+     * @allow (create, update, delete) - Currently allows anyone to create, update, or delete categories. Consider restricting to admins.
+     * @principle Allows public read access while leaving write access open for prototyping.
+     */
+    match /categories/{categoryId} {
+      allow get, list: if true;
+      allow create: if true;
+      allow update: if true;
+      allow delete: if true;
+    }
+
+    /**
+     * @description Enforces access control for user investments. Only the authenticated user can manage their own investments.
+     * @path /users/{userId}/investments/{investmentId}
+     * @allow (create, update, delete, get, list) - User with UID 'user123' can create/update/delete/get their own investment at /users/user123/investments/investment001.
+     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access investment at /users/user123/investments/investment001.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/investments/{investmentId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.userProfileId == userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isSignedIn() && isOwner(userId) && resource != null;
+    }
+  }
+}
