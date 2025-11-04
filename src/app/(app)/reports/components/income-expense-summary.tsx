@@ -55,8 +55,8 @@ export function IncomeExpenseSummary() {
                                 )}
                             />} 
                         />
-                        <Bar dataKey="income" radius={4} />
-                        <Bar dataKey="expenses" radius={4} />
+                        <Bar dataKey="income" fill="var(--color-income)" radius={4} />
+                        <Bar dataKey="expenses" fill="var(--color-expenses)" radius={4} />
                     </BarChart>
                 </ChartContainer>
             </CardContent>
