@@ -10,7 +10,7 @@ export default function ReportsPage() {
             <PageHeader
                 title="Financial Reports"
                 action={
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <Button variant="outline">
                             <Download className="mr-2 h-4 w-4" />
                             Export CSV

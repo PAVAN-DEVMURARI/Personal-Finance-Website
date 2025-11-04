@@ -10,28 +10,28 @@ export default function DashboardPage() {
   return (
     <>
       <PageHeader title="Dashboard" />
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="md:col-span-2 lg:col-span-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="col-span-1 md:col-span-2 lg:col-span-4">
             <StatsCards />
         </div>
         
-        <div className="md:col-span-2 lg:col-span-2">
+        <div className="col-span-1 md:col-span-2 lg:col-span-2">
             <SpendingChart />
         </div>
         
-        <div className="md:col-span-1 lg:col-span-1">
+        <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <FinancialTipCard />
         </div>
         
-        <div className="md:col-span-2 lg:col-span-2">
+        <div className="col-span-1 md:col-span-2 lg:col-span-2">
           <GoalsOverview />
         </div>
         
-        <div className="md:col-span-1 lg:col-span-1 row-start-3 md:row-start-auto">
+        <div className="col-span-1 md:col-span-1 lg:col-span-2">
             <GamificationSection />
         </div>
 
-        <div className="md:col-span-3 lg:col-span-3">
+        <div className="col-span-1 md:col-span-2 lg:col-span-4">
           <RecentTransactions />
         </div>
 

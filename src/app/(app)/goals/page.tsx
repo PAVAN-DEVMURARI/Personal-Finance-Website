@@ -20,7 +20,7 @@ export default function GoalsPage() {
                     </Button>
                 }
             />
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 {goals.map((goal) => {
                     const progress = (goal.currentAmount / goal.targetAmount) * 100;
                     return (
@@ -42,7 +42,7 @@ export default function GoalsPage() {
                         </Card>
                     );
                 })}
-                 <Card className="flex flex-col items-center justify-center border-2 border-dashed">
+                 <Card className="flex flex-col items-center justify-center border-2 border-dashed min-h-[200px]">
                     <div className="text-center p-6">
                         <h3 className="text-lg font-semibold mb-2">Create a New Goal</h3>
                         <p className="text-muted-foreground mb-4">Start saving for your next big thing.</p>
