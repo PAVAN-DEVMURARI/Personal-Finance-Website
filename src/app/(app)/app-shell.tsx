@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { UserNav } from '@/components/user-nav';
@@ -97,6 +99,9 @@ export function AppShell({
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
+                <SheetHeader className="p-6 pb-0">
+                    <SheetTitle className="sr-only">Main Menu</SheetTitle>
+                </SheetHeader>
                 <div className="flex h-[60px] items-center border-b px-6">
                     <Link href="/" className="flex items-center gap-2 font-semibold">
                         <FinpowerLogo className="h-6 w-6" />
