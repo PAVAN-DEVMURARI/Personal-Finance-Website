@@ -1,14 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where } from 'firebase/firestore';
 import { PlusCircle, X } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -19,12 +19,19 @@ export default function IncomePage() {
     const { firestore, user } = useFirebase();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const query = useMemoFirebase(() => {
-        if (!firestore || !user?.uid) return null;
-        return collection(firestore, 'users', user.uid, 'income');
-    }, [firestore, user?.uid]);
+    const monthStart = useMemo(() => startOfMonth(new Date()), []);
+    const monthEnd = useMemo(() => endOfMonth(new Date()), []);
 
-    const { data: incomes, isLoading } = useCollection(query);
+    const incomeQuery = useMemoFirebase(() => {
+        if (!firestore || !user?.uid) return null;
+        return query(
+            collection(firestore, 'users', user.uid, 'income'),
+            where('date', '>=', monthStart.toISOString()),
+            where('date', '<=', monthEnd.toISOString())
+        );
+    }, [firestore, user?.uid, monthStart, monthEnd]);
+
+    const { data: incomes, isLoading } = useCollection(incomeQuery);
 
     const handleAddIncome = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -80,8 +87,8 @@ export default function IncomePage() {
             />
             <Card>
                 <CardHeader>
-                    <CardTitle>Your Income Sources</CardTitle>
-                    <CardDescription>A detailed list of all your recorded income.</CardDescription>
+                    <CardTitle>This Month's Income</CardTitle>
+                    <CardDescription>A list of your income for the current month.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -121,7 +128,7 @@ export default function IncomePage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center">No income recorded yet.</TableCell>
+                                    <TableCell colSpan={5} className="text-center">No income recorded for this month.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>

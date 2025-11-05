@@ -1,14 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, query, where } from 'firebase/firestore';
 import { PlusCircle, X } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth } from "date-fns";
 import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -19,12 +19,19 @@ export default function ExpensesPage() {
     const { firestore, user } = useFirebase();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     
-    const query = useMemoFirebase(() => {
+    const monthStart = useMemo(() => startOfMonth(new Date()), []);
+    const monthEnd = useMemo(() => endOfMonth(new Date()), []);
+
+    const expensesQuery = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
-        return collection(firestore, 'users', user.uid, 'expenses');
-    }, [firestore, user?.uid]);
+        return query(
+            collection(firestore, 'users', user.uid, 'expenses'),
+            where('date', '>=', monthStart.toISOString()),
+            where('date', '<=', monthEnd.toISOString())
+        );
+    }, [firestore, user?.uid, monthStart, monthEnd]);
     
-    const { data: expenses, isLoading } = useCollection(query);
+    const { data: expenses, isLoading } = useCollection(expensesQuery);
 
     const handleAddExpense = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -92,8 +99,8 @@ export default function ExpensesPage() {
             />
             <Card>
                 <CardHeader>
-                    <CardTitle>Your Expenses</CardTitle>
-                    <CardDescription>A detailed list of all your recorded expenses.</CardDescription>
+                    <CardTitle>This Month's Expenses</CardTitle>
+                    <CardDescription>A list of your expenses for the current month.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -133,7 +140,7 @@ export default function ExpensesPage() {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={5} className="text-center">No expenses recorded yet.</TableCell>
+                                    <TableCell colSpan={5} className="text-center">No expenses recorded for this month.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
