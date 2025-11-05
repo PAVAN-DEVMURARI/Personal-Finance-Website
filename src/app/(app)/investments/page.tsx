@@ -29,6 +29,7 @@ const SymbolSchema = z.object({
     instrument_name: z.string(),
     exchange: z.string(),
     country: z.string(),
+    type: z.string(),
 });
 type SymbolSearchOutput = z.infer<typeof SymbolSchema>[];
 
@@ -81,16 +82,17 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
     const [searchResults, setSearchResults] = useState<SymbolSearchOutput>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [selectedSymbol, setSelectedSymbol] = useState('');
+    const [selectedType, setSelectedType] = useState('Stocks');
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
     const debouncedSearch = useCallback(
-        debounce((query: string) => {
+        debounce((query: string, type: string) => {
             if (query.length < 2) {
                 setSearchResults([]);
                 return;
             }
             setIsSearching(true);
-            symbolSearch({ query })
+            symbolSearch({ query, instrument_type: type })
                 .then(results => setSearchResults(results))
                 .finally(() => setIsSearching(false));
         }, 300),
@@ -98,8 +100,8 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
     );
 
     useEffect(() => {
-        debouncedSearch(searchQuery);
-    }, [searchQuery, debouncedSearch]);
+        debouncedSearch(searchQuery, selectedType);
+    }, [searchQuery, selectedType, debouncedSearch]);
 
 
     const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
@@ -109,7 +111,7 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
         const formData = new FormData(event.currentTarget);
         const newInvestment = {
             name: selectedSymbol || (formData.get('name') as string),
-            type: (formData.get('type') as string) || 'Stocks',
+            type: selectedType,
             purchasePrice: Number(formData.get('purchasePrice')),
             purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
             userProfileId: user.uid,
@@ -123,6 +125,7 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
         setSearchQuery('');
         setSelectedSymbol('');
         setSearchResults([]);
+        setSelectedType('Stocks');
     };
     
     return (
@@ -131,6 +134,7 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
                 setSearchQuery('');
                 setSelectedSymbol('');
                 setSearchResults([]);
+                setSelectedType('Stocks');
             }
             onOpenChange(isOpen);
          }}>
@@ -143,6 +147,18 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
             <DialogContent>
                 <DialogHeader><DialogTitle>Add New Investment</DialogTitle></DialogHeader>
                 <form onSubmit={handleAddInvestment} className="space-y-4">
+                    <div>
+                        <Label htmlFor="type">Type</Label>
+                         <Select name="type" value={selectedType} onValueChange={setSelectedType}>
+                            <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Stocks">Stocks</SelectItem>
+                                <SelectItem value="Crypto">Crypto</SelectItem>
+                                <SelectItem value="Mutual Funds">Mutual Funds</SelectItem>
+                                <SelectItem value="ETFs">ETFs</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <div>
                         <Label htmlFor="name">Name / Ticker</Label>
                         <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
@@ -159,13 +175,13 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                 <Command>
                                     <CommandInput 
-                                        placeholder="Search for a stock..." 
+                                        placeholder="Search for a symbol..." 
                                         value={searchQuery}
                                         onValueChange={setSearchQuery}
                                     />
                                     {isSearching && <div className="p-4 text-sm text-center">Searching...</div>}
-                                    <CommandEmpty>{!isSearching && searchQuery.length > 1 ? 'No symbols found.' : 'Type to search.'}</CommandEmpty>
                                     <CommandList>
+                                        <CommandEmpty>{!isSearching && searchQuery.length > 1 ? 'No symbols found.' : 'Type to search.'}</CommandEmpty>
                                         <CommandGroup>
                                             {searchResults.map((result) => (
                                                 <CommandItem
@@ -191,18 +207,6 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
                             </PopoverContent>
                         </Popover>
                          <Input id="name" name="name" type="hidden" value={selectedSymbol} />
-                    </div>
-                    <div>
-                        <Label htmlFor="type">Type</Label>
-                         <Select name="type" defaultValue="Stocks">
-                            <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Stocks">Stocks</SelectItem>
-                                <SelectItem value="Crypto">Crypto</SelectItem>
-                                <SelectItem value="Mutual Funds">Mutual Funds</SelectItem>
-                                <SelectItem value="ETFs">ETFs</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                     <div><Label htmlFor="purchasePrice">Purchase Price (per unit)</Label><Input id="purchasePrice" name="purchasePrice" type="number" step="any" required /></div>
                     <div><Label htmlFor="purchaseDate">Purchase Date</Label><Input id="purchaseDate" name="purchaseDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} /></div>
