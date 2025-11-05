@@ -1,21 +1,14 @@
-import withPWA from '@ducanh2912/next-pwa';
 
-const withPWAConfig = withPWA({
+/** @type {import('next').NextConfig} */
+import withPWAInit from '@ducanh2912/next-pwa';
+
+const withPWA = withPWAInit({
   dest: 'public',
-  register: true,
-  skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
 });
 
-/** @type {import('next').NextConfig} */
 const nextConfig = {
-    webpack: (config) => {
-        config.externals.push({
-            'sharp': 'commonjs sharp',
-            'onnxruntime-node': 'commonjs onnxruntime-node'
-        })
-        return config
-    }
+  // Your Next.js config...
 };
 
-export default withPWAConfig(nextConfig);
+export default withPWA(nextConfig);
