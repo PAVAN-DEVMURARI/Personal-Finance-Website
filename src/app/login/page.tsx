@@ -11,10 +11,26 @@ import { Label } from '@/components/ui/label';
 import { useAuth, useUser, initiateEmailSignUp, initiateEmailSignIn, FirebaseClientProvider } from '@/firebase';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FirebaseError } from 'firebase/app';
+
+function getAuthErrorMessage(error: FirebaseError): string {
+    switch (error.code) {
+        case 'auth/invalid-credential':
+            return 'Invalid email or password. Please try again.';
+        case 'auth/email-already-in-use':
+            return 'An account with this email already exists. Please log in.';
+        case 'auth/weak-password':
+            return 'Password is too weak. It should be at least 6 characters long.';
+        case 'auth/user-not-found':
+            return 'No account found with this email. Please sign up.';
+        default:
+            return 'An unexpected error occurred. Please try again.';
+    }
+}
 
 function LoginPageContent() {
   const auth = useAuth();
-  const { user, isUserLoading, userError } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [email, setEmail] = useState('');
@@ -27,19 +43,18 @@ function LoginPageContent() {
     }
   }, [user, router]);
   
-  useEffect(() => {
-    if(userError) {
-      setAuthError(userError.message);
-    }
-  }, [userError]);
-
   const handleAuthAction = (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+
+    const handleError = (error: FirebaseError) => {
+        setAuthError(getAuthErrorMessage(error));
+    };
+
     if (isSigningUp) {
-      initiateEmailSignUp(auth, email, password);
+      initiateEmailSignUp(auth, email, password, handleError);
     } else {
-      initiateEmailSignIn(auth, email, password);
+      initiateEmailSignIn(auth, email, password, handleError);
     }
   };
 
@@ -91,12 +106,6 @@ function LoginPageContent() {
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90">
               {isSigningUp ? 'Sign Up' : 'Login'}
             </Button>
-            {/* <Button variant="outline" className="w-full">
-              <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
-                <path fill="currentColor" d="M488 261.8C488 403.3 381.5 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 21.2 172.8 56.2l-78.3 78.3c-33.1-30-76.2-48.5-124.5-48.5-97.1 0-175.8 78.8-175.8 176s78.7 176 175.8 176c103.5 0 162.2-73.4 168.5-109.9H248v-86.3h239.9c.4 12.9 1 26.3 1 40.2z"></path>
-              </svg>
-              Login with Google
-            </Button> */}
           </form>
           <div className="mt-4 text-center text-sm">
             {isSigningUp ? 'Already have an account?' : "Don't have an account?"}{' '}
