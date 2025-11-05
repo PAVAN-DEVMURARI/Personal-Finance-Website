@@ -26,18 +26,18 @@ export type PortfolioPerformanceInput = z.infer<typeof PortfolioPerformanceInput
 const PortfolioPerformanceOutputSchema = z.record(PerformanceSchema);
 export type PortfolioPerformanceOutput = z.infer<typeof PortfolioPerformanceOutputSchema>;
 
-// This tool will fetch data for a single ticker.
+// This tool will fetch data for a single ticker using Twelve Data.
 const getAssetPerformanceTool = ai.defineTool(
     {
       name: 'getAssetPerformance',
-      description: 'Gets the historical performance of a stock, calculating percentage change over various periods.',
+      description: 'Gets the historical performance of an asset, calculating percentage change over various periods.',
       inputSchema: z.object({ ticker: z.string().describe('The stock ticker symbol.') }),
       outputSchema: PerformanceSchema,
     },
     async ({ ticker }) => {
-        const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
-        if (!apiKey || apiKey === 'YOUR_API_KEY' || apiKey === 'XP3RGQIPH960ZMJM') {
-            console.warn("Alpha Vantage API key not found or is placeholder. Using mock data for", ticker);
+        const apiKey = process.env.TWELVE_DATA_API_KEY;
+        if (!apiKey || apiKey === 'YOUR_API_KEY') {
+            console.warn("Twelve Data API key not found or is a placeholder. Using mock data for", ticker);
             return { 
                 weeklyChange: (Math.random() - 0.5) * 10,
                 monthlyChange: (Math.random() - 0.5) * 20,
@@ -46,29 +46,28 @@ const getAssetPerformanceTool = ai.defineTool(
             };
         }
         
-        const url = `https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol=${ticker}&outputsize=full&apikey=${apiKey}`;
+        // Using Twelve Data API
+        const url = `https://api.twelvedata.com/time_series?symbol=${ticker}&interval=1day&outputsize=2000&apikey=${apiKey}`;
         
         try {
             const response = await fetch(url);
             const data: any = await response.json();
-            const timeSeries = data['Time Series (Daily)'];
 
-            if (!timeSeries) {
-                if (data['Note']) {
-                    // Handle API call frequency limit note
-                    console.warn(`Alpha Vantage API note for ${ticker}: ${data['Note']}`);
-                     throw new Error(`API call frequency limit reached for ${ticker}.`);
+            if (data.status !== 'ok' || !data.values) {
+                 if (data.code === 429) {
+                    console.warn(`Twelve Data API rate limit hit for ${ticker}.`);
+                    throw new Error(`API rate limit reached for ${ticker}.`);
                 }
-                console.error(`Could not parse time series for ${ticker}. Response:`, data);
-                throw new Error(`Failed to fetch time series data for ${ticker}.`);
+                console.error(`Could not fetch time series for ${ticker}. Response:`, data);
+                throw new Error(`Failed to fetch time series data for ${ticker}. Message: ${data.message}`);
             }
 
-            const dates = Object.keys(timeSeries).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-            
+            const timeSeries = data.values.sort((a: any, b: any) => new Date(b.datetime).getTime() - new Date(a.datetime).getTime());
+
             const getPriceOnOrBefore = (date: Date) => {
                 const dateString = date.toISOString().split('T')[0];
-                let targetDate = dates.find(d => d <= dateString);
-                return targetDate ? parseFloat(timeSeries[targetDate]['4. close']) : null;
+                const record = timeSeries.find((d: any) => d.datetime <= dateString);
+                return record ? parseFloat(record.close) : null;
             };
 
             const now = new Date();
@@ -96,7 +95,7 @@ const getAssetPerformanceTool = ai.defineTool(
                 fiveYearlyChange: calculateChange(fiveYearsAgoPrice, todayPrice)
             };
         } catch (error) {
-            console.error(`Error fetching stock performance for ${ticker}:`, error);
+            console.error(`Error fetching stock performance for ${ticker} from Twelve Data:`, error);
             throw error;
         }
     }
@@ -134,7 +133,7 @@ const getPortfolioPerformanceFlow = ai.defineFlow(
             } else if (outcome.status === 'fulfilled' && outcome.value.status === 'rejected') {
                 const { ticker, reason } = outcome.value;
                 console.warn(`Could not fetch performance for ${ticker}: ${reason}`);
-                // Optionally, you could add a specific error state for this ticker in the response
+                // You could add a specific error state for this ticker in the response
             } else if (outcome.status === 'rejected') {
                 // This would be an unexpected error in the Promise.allSettled itself
                 console.error("An unexpected error occurred in getPortfolioPerformanceFlow:", outcome.reason);
