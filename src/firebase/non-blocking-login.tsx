@@ -5,10 +5,28 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   FirebaseError,
+  UserCredential,
   // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
+import { setDocumentNonBlocking } from './non-blocking-updates';
+import { doc } from 'firebase/firestore';
+import { getSdks } from '.';
 
 type ErrorCallback = (error: FirebaseError) => void;
+
+function createProfile(userCredential: UserCredential) {
+    const { firestore } = getSdks(userCredential.user.provider.app);
+    const user = userCredential.user;
+    const [firstName, lastName] = user.displayName?.split(' ') || ['', ''];
+    const profileRef = doc(firestore, 'users', user.uid, 'profile');
+    setDocumentNonBlocking(profileRef, {
+        id: user.uid,
+        email: user.email,
+        firstName: firstName,
+        lastName: lastName,
+        createdAt: new Date().toISOString(),
+    }, { merge: true });
+}
 
 /** Initiate anonymous sign-in (non-blocking). */
 export function initiateAnonymousSignIn(authInstance: Auth, onError?: ErrorCallback): void {
@@ -17,7 +35,9 @@ export function initiateAnonymousSignIn(authInstance: Auth, onError?: ErrorCallb
 
 /** Initiate email/password sign-up (non-blocking). */
 export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, onError?: ErrorCallback): void {
-  createUserWithEmailAndPassword(authInstance, email, password).catch(onError);
+  createUserWithEmailAndPassword(authInstance, email, password)
+    .then(createProfile)
+    .catch(onError);
 }
 
 /** Initiate email/password sign-in (non-blocking). */
