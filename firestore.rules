@@ -29,12 +29,12 @@ service cloud.firestore {
 
     /**
      * @description Enforces access control for user profiles. Only the authenticated user can read and write their own profile.
-     * @path /users/{userId}/profile
-     * @allow (create, update, delete, get, list) - User with UID 'user123' can create/update/delete/get their own profile at /users/user123/profile.
-     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access profile at /users/user123/profile.
+     * @path /users/{userId}
+     * @allow (create, update, delete, get, list) - User with UID 'user123' can create/update/delete/get their own profile at /users/user123.
+     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access profile at /users/user123.
      * @principle Enforces document ownership for all operations.
      */
-    match /users/{userId}/profile {
+    match /users/{userId} {
       // Allow reads/writes if the user is signed in and the requested userId
       // matches the authenticated user's ID.
       allow get: if isSignedIn() && isOwner(userId);
@@ -132,3 +132,4 @@ service cloud.firestore {
     }
   }
 }
+    

@@ -229,7 +229,7 @@
   "firestore": {
     "structure": [
       {
-        "path": "/users/{userId}/profile",
+        "path": "/users/{userId}",
         "definition": {
           "entityName": "UserProfile",
           "schema": {
@@ -341,6 +341,7 @@
         }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, DBAC, and support secure list operations (QAPs). User data is segregated to ensure that each collection has a homogeneous security posture.\n\n1.  **User Profiles:** User profiles are stored in a path-based structure under `/users/{userId}/profile`. This ensures that only the authenticated user can access their profile data. No denormalization is required as access is determined solely by the path.\n2.  **Expenses, Income, SavingsGoals, Investments:**  These entities are stored as subcollections under the user's profile (e.g., `/users/{userId}/expenses/{expenseId}`). This enforces clear ownership. Access is determined by the `userId` in the path, ensuring Authorization Independence. Since these collections are user-specific and path-based, no further denormalization is required for authorization.\n3.  **Categories:** Categories are stored in a top-level collection `/categories`.  To manage access, we could implement a `members` map with roles, but this isn't strictly necessary given the application details.  It's assumed these are global.\n\nThis structure achieves Authorization Independence by avoiding `get()` calls in the rules. The path-based ownership model for user-specific data (`/users/{userId}/*`) makes it easy to write security rules that only allow authenticated users to access their own data. The segregation of data into user-specific subcollections supports the QAPs by enabling secure list operations; a user can only list the documents within their own subcollections."
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, DBAC, and support secure list operations (QAPs). User data is segregated to ensure that each collection has a homogeneous security posture.\n\n1.  **User Profiles:** User profiles are stored in a path-based structure under `/users/{userId}`. This ensures that only the authenticated user can access their profile data. No denormalization is required as access is determined solely by the path.\n2.  **Expenses, Income, SavingsGoals, Investments:**  These entities are stored as subcollections under the user's document (e.g., `/users/{userId}/expenses/{expenseId}`). This enforces clear ownership. Access is determined by the `userId` in the path, ensuring Authorization Independence. Since these collections are user-specific and path-based, no further denormalization is required for authorization.\n3.  **Categories:** Categories are stored in a top-level collection `/categories`.  To manage access, we could implement a `members` map with roles, but this isn't strictly necessary given the application details.  It's assumed these are global.\n\nThis structure achieves Authorization Independence by avoiding `get()` calls in the rules. The path-based ownership model for user-specific data (`/users/{userId}/*`) makes it easy to write security rules that only allow authenticated users to access their own data. The segregation of data into user-specific subcollections supports the QAPs by enabling secure list operations; a user can only list the documents within their own subcollections."
   }
 }
+    

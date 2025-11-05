@@ -18,7 +18,7 @@ function createProfile(userCredential: UserCredential) {
     const { firestore } = getSdks(userCredential.user.provider.app);
     const user = userCredential.user;
     const [firstName, lastName] = user.displayName?.split(' ') || ['', ''];
-    const profileRef = doc(firestore, 'users', user.uid, 'profile');
+    const profileRef = doc(firestore, 'users', user.uid);
     setDocumentNonBlocking(profileRef, {
         id: user.uid,
         email: user.email,
@@ -44,3 +44,5 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 export function initiateEmailSignIn(authInstance: Auth, email: string, password: string, onError?: ErrorCallback): void {
   signInWithEmailAndPassword(authInstance, email, password).catch(onError);
 }
+
+    

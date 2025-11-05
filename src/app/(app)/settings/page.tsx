@@ -31,7 +31,7 @@ export default function SettingsPage() {
 
   const userProfileRef = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    return doc(firestore, 'users', user.uid, 'profile');
+    return doc(firestore, 'users', user.uid);
   }, [firestore, user?.uid]);
 
   const { data: userProfile, isLoading } = useDoc(userProfileRef);
@@ -130,3 +130,5 @@ export default function SettingsPage() {
     </>
   );
 }
+
+    
