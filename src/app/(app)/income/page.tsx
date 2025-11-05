@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,12 +19,12 @@ export default function IncomePage() {
     const { firestore, user } = useFirebase();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-    const query = useMemo(() => {
+    const query = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return collection(firestore, 'users', user.uid, 'income');
     }, [firestore, user?.uid]);
 
-    const { data: incomes, isLoading } = useCollection(query as any);
+    const { data: incomes, isLoading } = useCollection(query);
 
     const handleAddIncome = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -72,7 +72,7 @@ export default function IncomePage() {
                                 <div><Label htmlFor="source">Source</Label><Input id="source" name="source" required /></div>
                                 <div><Label htmlFor="amount">Amount</Label><Input id="amount" name="amount" type="number" required /></div>
                                 <div><Label htmlFor="date">Date</Label><Input id="date" name="date" type="date" defaultValue={format(new Date(), 'yyyy-MM-dd')} required /></div>
-                                <Button type="submit" className="w-full">Add Income</Button>
+                                <Button type="submit" className="w-full">Add Income</Button>                            
                             </form>
                         </DialogContent>
                     </Dialog>

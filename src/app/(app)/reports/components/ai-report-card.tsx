@@ -7,31 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle , CardFooter } from "@/components/ui/card";
 import { generateMonthlyReport, type MonthlyReportInput, type MonthlyReportOutput } from "@/ai/flows/monthly-ai-financial-report";
 import { Separator } from "@/components/ui/separator";
-import { useCollection, useFirebase } from "@/firebase";
+import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
 
 export function AiReportCard() {
     const [isPending, startTransition] = useTransition();
     const [report, setReport] = useState<MonthlyReportOutput | null>(null);
     const { firestore, user } = useFirebase();
 
-    const expensesQuery = useMemo(() => {
+    const expensesQuery = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return collection(firestore, 'users', user.uid, 'expenses');
     }, [firestore, user?.uid]);
 
-    const incomeQuery = useMemo(() => {
+    const incomeQuery = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return collection(firestore, 'users', user.uid, 'income');
     }, [firestore, user?.uid]);
 
-    const investmentsQuery = useMemo(() => {
+    const investmentsQuery = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return collection(firestore, 'users', user.uid, 'investments');
     }, [firestore, user?.uid]);
 
-    const { data: expenses } = useCollection(expensesQuery as any);
-    const { data: income } = useCollection(incomeQuery as any);
-    const { data: investments } = useCollection(investmentsQuery as any);
+    const { data: expenses } = useCollection(expensesQuery);
+    const { data: income } = useCollection(incomeQuery);
+    const { data: investments } = useCollection(investmentsQuery);
 
     const reportInput: MonthlyReportInput | null = useMemo(() => {
         if (!expenses || !income || !investments) return null;

@@ -23,24 +23,24 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useCollection, useFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function RecentTransactions() {
   const { firestore, user } = useFirebase();
 
-  const expensesQuery = useMemo(() => {
+  const expensesQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(collection(firestore, 'users', user.uid, 'expenses'), orderBy('date', 'desc'), limit(3));
   }, [firestore, user?.uid]);
 
-  const incomeQuery = useMemo(() => {
+  const incomeQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(collection(firestore, 'users', user.uid, 'income'), orderBy('date', 'desc'), limit(2));
   }, [firestore, user?.uid]);
 
-  const { data: expenses, isLoading: expensesLoading } = useCollection(expensesQuery as any);
-  const { data: income, isLoading: incomeLoading } = useCollection(incomeQuery as any);
+  const { data: expenses, isLoading: expensesLoading } = useCollection(expensesQuery);
+  const { data: income, isLoading: incomeLoading } = useCollection(incomeQuery);
 
   const transactions = useMemo(() => {
     const combined = [
@@ -92,7 +92,7 @@ export function RecentTransactions() {
                     transactions.map((transaction) => (
                     <TableRow key={transaction.id}>
                         <TableCell>
-                        <div className="font-medium">{transaction.description}</div>
+                        <div className="font-medium">{transaction.description || transaction.source}</div>
                         </TableCell>
                         <TableCell className="hidden sm:table-cell">
                         <Badge className="text-xs" variant="outline">

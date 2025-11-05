@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { format } from "date-fns";
-import { useCollection, useFirebase, addDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirebase, addDocumentNonBlocking, updateDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,12 +20,12 @@ export default function GoalsPage() {
     const [isUpdateDialogOpen, setUpdateDialogOpen] = useState(false);
     const [selectedGoal, setSelectedGoal] = useState<any>(null);
 
-    const query = useMemo(() => {
+    const query = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return collection(firestore, 'users', user.uid, 'savingsGoals');
     }, [firestore, user?.uid]);
 
-    const { data: goals, isLoading } = useCollection(query as any);
+    const { data: goals, isLoading } = useCollection(query);
 
     const handleAddGoal = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();

@@ -12,7 +12,7 @@ import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -56,12 +56,12 @@ export default function InvestmentsPage() {
     const [timePeriod, setTimePeriod] = useState<TimePeriod>('1M');
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
-    const query = useMemo(() => {
+    const query = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return collection(firestore, 'users', user.uid, 'investments');
     }, [firestore, user?.uid]);
 
-    const { data: investments, isLoading } = useCollection(query as any);
+    const { data: investments, isLoading } = useCollection(query);
 
     const totalInvestments = useMemo(() => {
         if (!investments) return 0;
@@ -92,6 +92,7 @@ export default function InvestmentsPage() {
             purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
             userProfileId: user.uid,
             createdAt: serverTimestamp(),
+            monthlyChange: (Math.random() - 0.5) * 5, // Mock monthly change
         };
 
         const colRef = collection(firestore, 'users', user.uid, 'investments');

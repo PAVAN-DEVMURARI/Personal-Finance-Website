@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking } from '@/firebase';
+import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,12 +19,12 @@ export default function ExpensesPage() {
     const { firestore, user } = useFirebase();
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     
-    const query = useMemo(() => {
+    const query = useMemoFirebase(() => {
         if (!firestore || !user?.uid) return null;
         return collection(firestore, 'users', user.uid, 'expenses');
     }, [firestore, user?.uid]);
     
-    const { data: expenses, isLoading } = useCollection(query as any);
+    const { data: expenses, isLoading } = useCollection(query);
 
     const handleAddExpense = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();

@@ -5,18 +5,18 @@ import { collection } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { format } from 'date-fns';
-import { useCollection, useFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function GoalsOverview() {
   const { firestore, user } = useFirebase();
 
-  const query = useMemo(() => {
+  const query = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return collection(firestore, 'users', user.uid, 'savingsGoals');
   }, [firestore, user?.uid]);
 
-  const { data: goals, isLoading } = useCollection(query as any);
+  const { data: goals, isLoading } = useCollection(query);
 
   if (isLoading) {
     return (

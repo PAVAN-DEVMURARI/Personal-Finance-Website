@@ -17,18 +17,18 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart';
-import { useCollection, useFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function SpendingChart() {
   const { firestore, user } = useFirebase();
 
-  const query = useMemo(() => {
+  const query = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return collection(firestore, 'users', user.uid, 'expenses');
   }, [firestore, user?.uid]);
 
-  const { data: transactions, isLoading } = useCollection(query as any);
+  const { data: transactions, isLoading } = useCollection(query);
 
   const spendingByCategory = useMemo(() => {
     if (!transactions) return {};

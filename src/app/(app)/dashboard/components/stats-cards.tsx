@@ -4,24 +4,24 @@ import { useMemo } from 'react';
 import { collection } from 'firebase/firestore';
 import { ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCollection, useFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function StatsCards() {
   const { firestore, user } = useFirebase();
 
-  const expensesQuery = useMemo(() => {
+  const expensesQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return collection(firestore, 'users', user.uid, 'expenses');
   }, [firestore, user?.uid]);
   
-  const incomeQuery = useMemo(() => {
+  const incomeQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return collection(firestore, 'users', user.uid, 'income');
   }, [firestore, user?.uid]);
 
-  const { data: expenses, isLoading: expensesLoading } = useCollection(expensesQuery as any);
-  const { data: income, isLoading: incomeLoading } = useCollection(incomeQuery as any);
+  const { data: expenses, isLoading: expensesLoading } = useCollection(expensesQuery);
+  const { data: income, isLoading: incomeLoading } = useCollection(incomeQuery);
 
   const totalIncome = useMemo(() => income?.reduce((acc, t) => acc + t.amount, 0) || 0, [income]);
   const totalExpenses = useMemo(() => expenses?.reduce((acc, t) => acc + t.amount, 0) || 0, [expenses]);
