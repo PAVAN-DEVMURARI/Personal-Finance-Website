@@ -18,19 +18,21 @@ export function FinancialTipCard() {
   const [tip, setTip] = useState<FinancialTipOutput>(initialTip);
   const { firestore, user } = useFirebase();
 
-  const now = new Date();
-  const startOfCurrentMonth = startOfMonth(now);
-  const startOfPreviousMonth = startOfMonth(subMonths(now, 1));
-  const endOfPreviousMonth = endOfMonth(subMonths(now, 1));
+  const now = useMemo(() => new Date(), []);
+  const startOfCurrentMonth = useMemo(() => startOfMonth(now), [now]);
+  const endOfCurrentMonth = useMemo(() => endOfMonth(now), [now]);
+  const startOfPreviousMonth = useMemo(() => startOfMonth(subMonths(now, 1)), [now]);
+  const endOfPreviousMonth = useMemo(() => endOfMonth(subMonths(now, 1)), [now]);
+
 
   const currentMonthExpensesQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
         collection(firestore, 'users', user.uid, 'expenses'),
         where('date', '>=', startOfCurrentMonth.toISOString()),
-        where('date', '<=', endOfMonth(now).toISOString())
+        where('date', '<=', endOfCurrentMonth.toISOString())
     );
-  }, [firestore, user?.uid, startOfCurrentMonth]);
+  }, [firestore, user?.uid, startOfCurrentMonth, endOfCurrentMonth]);
 
   const previousMonthExpensesQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;

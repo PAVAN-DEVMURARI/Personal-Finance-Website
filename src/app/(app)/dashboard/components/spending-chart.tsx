@@ -33,9 +33,8 @@ const getStableColor = (category: string) => {
 
 export function SpendingChart() {
   const { firestore, user } = useFirebase();
-  const now = new Date();
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
+  const monthStart = useMemo(() => startOfMonth(new Date()), []);
+  const monthEnd = useMemo(() => endOfMonth(new Date()), []);
 
   const spendingQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
