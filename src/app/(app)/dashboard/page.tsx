@@ -4,7 +4,6 @@ import { SpendingChart } from './components/spending-chart';
 import { GoalsOverview } from './components/goals-overview';
 import { RecentTransactions } from './components/recent-transactions';
 import { FinancialTipCard } from './components/financial-tip-card';
-import { GamificationSection } from './components/gamification-section';
 
 export default function DashboardPage() {
   return (
@@ -23,14 +22,10 @@ export default function DashboardPage() {
             <FinancialTipCard />
         </div>
         
-        <div className="col-span-1 md:col-span-2 lg:col-span-2">
+        <div className="col-span-1 md:col-span-2 lg:col-span-4">
           <GoalsOverview />
         </div>
         
-        <div className="col-span-1 md:col-span-1 lg:col-span-2">
-            <GamificationSection />
-        </div>
-
         <div className="col-span-1 md:col-span-2 lg:col-span-4">
           <RecentTransactions />
         </div>
