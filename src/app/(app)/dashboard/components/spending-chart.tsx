@@ -67,15 +67,20 @@ export function SpendingChart() {
     fill: getStableColor(category),
   })), [spendingByCategory]);
 
-  const chartConfig = useMemo(() => ({
-    amount: {
-      label: 'Amount (INR)',
-    },
-    ...chartData.reduce((acc, { category }) => {
-      acc[category] = { label: category };
-      return acc;
-    }, {} as any)
-  }), [chartData]);
+  const chartConfig = useMemo(() => {
+    const config: any = {
+      amount: {
+        label: 'Amount (INR)',
+      },
+    };
+    chartData.forEach(item => {
+      config[item.category] = {
+        label: item.category,
+        color: item.fill,
+      };
+    });
+    return config;
+  }, [chartData]);
   
   if (isLoading) {
     return (
