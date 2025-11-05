@@ -148,7 +148,7 @@ Analyze the asset based on the provided data. Based on your analysis, determine 
 - If there are signs of a downturn or it's overvalued, set the signal to 'SELL'.
 - Otherwise, set the signal to 'HOLD'.
 
-Provide a concise, one-paragraph explanation for your recommendation in the 'advice' field.
+Provide a concise, one-paragraph explanation for your recommendation in the 'advice' field. For non-stock assets, provide general advice based on the asset type.
 
 Finally, set the 'disclaimer' to: "This is AI-generated analysis and not financial advice. Always do your own research and consult with a qualified financial advisor before making investment decisions."`,
 });

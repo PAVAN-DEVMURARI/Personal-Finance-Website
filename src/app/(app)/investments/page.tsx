@@ -39,7 +39,7 @@ const signalColors: { [key: string]: string } = {
 };
 
 const ChangeCell = ({ value }: { value?: number }) => {
-    if (value === undefined) {
+    if (value === undefined || value === null) {
         return <span className="text-muted-foreground">N/A</span>;
     }
     const isPositive = value >= 0;
@@ -100,7 +100,7 @@ export default function InvestmentsPage() {
         const formData = new FormData(event.currentTarget);
         const newInvestment = {
             name: formData.get('name') as string,
-            type: formData.get('type') as string,
+            type: (formData.get('type') as string) || 'Stocks',
             purchasePrice: Number(formData.get('purchasePrice')),
             purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
             userProfileId: user.uid,
@@ -141,7 +141,7 @@ export default function InvestmentsPage() {
                                 <div><Label htmlFor="name">Name / Ticker</Label><Input id="name" name="name" required /></div>
                                 <div>
                                     <Label htmlFor="type">Type</Label>
-                                    <Select name="type" required>
+                                     <Select name="type" defaultValue="Stocks">
                                         <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Stocks">Stocks</SelectItem>
@@ -151,8 +151,8 @@ export default function InvestmentsPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div><Label htmlFor="purchasePrice">Purchase Price</Label><Input id="purchasePrice" name="purchasePrice" type="number" step="any" required /></div>
-                                <div><Label htmlFor="purchaseDate">Purchase Date</Label><Input id="purchaseDate" name="purchaseDate" type="date" required /></div>
+                                <div><Label htmlFor="purchasePrice">Purchase Price (per unit)</Label><Input id="purchasePrice" name="purchasePrice" type="number" step="any" required /></div>
+                                <div><Label htmlFor="purchaseDate">Purchase Date</Label><Input id="purchaseDate" name="purchaseDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} /></div>
                                 <Button type="submit" className="w-full">Add Investment</Button>
                             </form>
                         </DialogContent>
@@ -184,6 +184,7 @@ export default function InvestmentsPage() {
                                     <TableRow>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Type</TableHead>
+                                        <TableHead>Purchase Price</TableHead>
                                         <TableHead>1W %</TableHead>
                                         <TableHead>1M %</TableHead>
                                         <TableHead>1Y %</TableHead>
@@ -195,7 +196,7 @@ export default function InvestmentsPage() {
                                 <TableBody>
                                     {isLoading ? (
                                         [...Array(3)].map((_, i) => (
-                                            <TableRow key={i}><TableCell colSpan={8}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                                            <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
                                         ))
                                     ) : investments && investments.length > 0 ? (
                                         investments.map((inv) => {
@@ -207,7 +208,9 @@ export default function InvestmentsPage() {
                                                 <TableRow key={inv.id}>
                                                     <TableCell className="font-medium">{inv.name}</TableCell>
                                                     <TableCell><Badge variant="outline">{inv.type}</Badge></TableCell>
-                                                    {adviceState?.isPending ? (
+                                                    <TableCell>{inv.purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
+                                                    
+                                                    {adviceState?.isPending && isStock ? (
                                                         <TableCell colSpan={4}><Loader2 className="h-4 w-4 animate-spin" /></TableCell>
                                                     ) : (
                                                         <>
@@ -217,6 +220,7 @@ export default function InvestmentsPage() {
                                                             <TableCell><ChangeCell value={isStock ? performance?.fiveYearlyChange : undefined} /></TableCell>
                                                         </>
                                                     )}
+                                                    
                                                     <TableCell>
                                                         <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={advice[inv.id]?.isPending}>
                                                             {advice[inv.id]?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
@@ -232,7 +236,7 @@ export default function InvestmentsPage() {
                                             );
                                         })
                                     ) : (
-                                        <TableRow><TableCell colSpan={8} className="text-center">No investments yet.</TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={9} className="text-center">No investments yet.</TableCell></TableRow>
                                     )}
                                 </TableBody>
                             </Table>
