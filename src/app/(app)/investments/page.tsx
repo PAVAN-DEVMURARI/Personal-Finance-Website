@@ -11,6 +11,7 @@ import { investments } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type AdviceState = {
     [key: string]: {
@@ -18,6 +19,8 @@ type AdviceState = {
         output: InvestmentAdviceOutput | null;
     };
 };
+
+type TimePeriod = '1W' | '1M' | '1Y' | '5Y';
 
 const signalIcons = {
     BUY: <ShieldCheck className="h-4 w-4 text-green-500" />,
@@ -31,10 +34,26 @@ const signalColors: { [key: string]: string } = {
     HOLD: 'border-yellow-500/50',
 };
 
+// Mock percentage changes for different time periods
+const getMockChange = (baseChange: number, period: TimePeriod) => {
+    switch (period) {
+        case '1W':
+            return baseChange / 4 + (Math.random() - 0.5);
+        case '1M':
+            return baseChange + (Math.random() - 0.5) * 2;
+        case '1Y':
+            return baseChange * 12 + (Math.random() - 0.5) * 10;
+        case '5Y':
+            return baseChange * 60 + (Math.random() - 0.5) * 50;
+        default:
+            return baseChange;
+    }
+};
 
 export default function InvestmentsPage() {
     const totalInvestments = investments.reduce((acc, inv) => acc + inv.value, 0);
     const [advice, setAdvice] = useState<AdviceState>({});
+    const [timePeriod, setTimePeriod] = useState<TimePeriod>('1M');
 
     const handleGetAdvice = (investmentId: string, assetName: string) => {
         setAdvice(prev => ({ ...prev, [investmentId]: { isPending: true, output: null } }));
@@ -71,53 +90,63 @@ export default function InvestmentsPage() {
                         <p className="text-sm text-muted-foreground">+5.4% all time</p>
                     </CardContent>
                 </Card>
-
                 <Card>
                     <CardHeader>
                         <CardTitle>Your Portfolio</CardTitle>
                         <CardDescription>A detailed view of your current investments with AI-powered advice.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Monthly Change</TableHead>
-                                        <TableHead>AI Advice</TableHead>
-                                        <TableHead className="text-right">Value</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {investments.map((inv) => (
-                                        <TableRow key={inv.id}>
-                                            <TableCell className="font-medium">{inv.name}</TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline">{inv.type}</Badge>
-                                            </TableCell>
-                                            <TableCell className={cn("flex items-center gap-1", inv.monthlyChange >= 0 ? 'text-green-500' : 'text-red-500')}>
-                                                {inv.monthlyChange >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                                                {inv.monthlyChange}%
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name)} disabled={advice[inv.id]?.isPending}>
-                                                    {advice[inv.id]?.isPending ? (
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    ) : (
-                                                        <BrainCircuit className="mr-2 h-4 w-4" />
-                                                    )}
-                                                    Get Advice
-                                                </Button>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                {inv.value.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                            </TableCell>
+                       <Tabs value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriod)}>
+                            <TabsList className="grid w-full grid-cols-4 mb-4">
+                                <TabsTrigger value="1W">Week</TabsTrigger>
+                                <TabsTrigger value="1M">Month</TabsTrigger>
+                                <TabsTrigger value="1Y">Year</TabsTrigger>
+                                <TabsTrigger value="5Y">5 Years</TabsTrigger>
+                            </TabsList>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Name</TableHead>
+                                            <TableHead>Type</TableHead>
+                                            <TableHead>Change</TableHead>
+                                            <TableHead>AI Advice</TableHead>
+                                            <TableHead className="text-right">Value</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {investments.map((inv) => {
+                                            const change = getMockChange(inv.monthlyChange, timePeriod);
+                                            return (
+                                                <TableRow key={inv.id}>
+                                                    <TableCell className="font-medium">{inv.name}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline">{inv.type}</Badge>
+                                                    </TableCell>
+                                                    <TableCell className={cn("flex items-center gap-1", change >= 0 ? 'text-green-500' : 'text-red-500')}>
+                                                        {change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+                                                        {change.toFixed(2)}%
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name)} disabled={advice[inv.id]?.isPending}>
+                                                            {advice[inv.id]?.isPending ? (
+                                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                            ) : (
+                                                                <BrainCircuit className="mr-2 h-4 w-4" />
+                                                            )}
+                                                            Get Advice
+                                                        </Button>
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        {inv.value.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                                    </TableCell>
+                                                </TableRow>
+                                            );
+                                        })}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                        </Tabs>
                     </CardContent>
                 </Card>
 
