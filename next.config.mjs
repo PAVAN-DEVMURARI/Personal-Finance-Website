@@ -1,17 +1,21 @@
+import withPWA from '@ducanh2912/next-pwa';
 
-import withPWAInit from '@ducanh2912/next-pwa';
-
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  webpack: (config) => {
-    config.externals.push('pino-pretty', 'lokijs', 'encoding');
-    return config;
-  },
-};
-
-const withPWA = withPWAInit({
+const withPWAConfig = withPWA({
   dest: 'public',
+  register: true,
+  skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
 });
 
-export default withPWA(nextConfig);
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    webpack: (config) => {
+        config.externals.push({
+            'sharp': 'commonjs sharp',
+            'onnxruntime-node': 'commonjs onnxruntime-node'
+        })
+        return config
+    }
+};
+
+export default withPWAConfig(nextConfig);
