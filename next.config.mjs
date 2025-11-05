@@ -1,41 +1,17 @@
+
+import withPWAInit from '@ducanh2912/next-pwa';
+
 /** @type {import('next').NextConfig} */
-import withPWAInit from "@ducanh2912/next-pwa";
-
-const withPWA = withPWAInit({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
-});
-
 const nextConfig = {
-  /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'placehold.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-    ],
+  webpack: (config) => {
+    config.externals.push('pino-pretty', 'lokijs', 'encoding');
+    return config;
   },
 };
+
+const withPWA = withPWAInit({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+});
 
 export default withPWA(nextConfig);
