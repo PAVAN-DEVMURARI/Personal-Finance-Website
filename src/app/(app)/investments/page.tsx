@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import { collection, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, getDocs, query, where, updateDoc, addDoc } from 'firebase/firestore';
 import { PlusCircle, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -11,12 +11,14 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+
 
 type AdviceState = {
     [key: string]: {
@@ -38,25 +40,59 @@ const signalColors: { [key: string]: string } = {
     HOLD: 'border-yellow-500/50',
 };
 
-function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: boolean, onOpenChange: (open: boolean) => void, user: any, firestore: any }) {
+function AddInvestmentDialog({ open, onOpenChange, user, firestore, investments }: { open: boolean, onOpenChange: (open: boolean) => void, user: any, firestore: any, investments: any[] | null }) {
     const [selectedType, setSelectedType] = useState('Stocks');
+    const { toast } = useToast();
 
-    const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
+    const handleAddInvestment = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         if (!firestore || !user?.uid) return;
 
         const formData = new FormData(event.currentTarget);
-        const newInvestment = {
-            name: formData.get('name') as string,
-            type: selectedType,
-            purchasePrice: Number(formData.get('purchasePrice')),
-            purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
-            userProfileId: user.uid,
-            createdAt: serverTimestamp(),
-        };
+        const name = formData.get('name') as string;
+        const type = selectedType;
+        const purchasePrice = Number(formData.get('purchasePrice'));
+        const purchaseDate = new Date(formData.get('purchaseDate') as string).toISOString();
 
-        const colRef = collection(firestore, 'users', user.uid, 'investments');
-        addDocumentNonBlocking(colRef, newInvestment);
+        try {
+            const investmentsRef = collection(firestore, 'users', user.uid, 'investments');
+            const q = query(investmentsRef, where("name", "==", name), where("type", "==", type));
+            const querySnapshot = await getDocs(q);
+
+            if (!querySnapshot.empty) {
+                // Investment exists, update it
+                const existingDoc = querySnapshot.docs[0];
+                const newTotal = existingDoc.data().purchasePrice + purchasePrice;
+                await updateDoc(existingDoc.ref, { purchasePrice: newTotal });
+                 toast({
+                    title: "Investment Updated",
+                    description: `Added ${purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })} to ${name}.`,
+                });
+            } else {
+                // Investment doesn't exist, create it
+                const newInvestment = {
+                    name,
+                    type,
+                    purchasePrice,
+                    purchaseDate,
+                    userProfileId: user.uid,
+                    createdAt: serverTimestamp(),
+                };
+                await addDoc(investmentsRef, newInvestment);
+                 toast({
+                    title: "Investment Added",
+                    description: `${name} has been added to your portfolio.`,
+                });
+            }
+        } catch (error) {
+            console.error("Error adding or updating investment: ", error);
+            toast({
+                variant: 'destructive',
+                title: "Error",
+                description: "Could not add or update investment.",
+            });
+        }
+        
         onOpenChange(false);
         setSelectedType('Stocks');
     };
@@ -144,7 +180,7 @@ export default function InvestmentsPage() {
             <PageHeader
                 title="Investments"
                 action={
-                    <AddInvestmentDialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen} user={user} firestore={firestore} />
+                    <AddInvestmentDialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen} user={user} firestore={firestore} investments={investments} />
                 }
             />
 
