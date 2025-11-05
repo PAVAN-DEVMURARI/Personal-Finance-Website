@@ -48,6 +48,7 @@ const getStockPriceTool = ai.defineTool(
 
 const InvestmentAdviceInputSchema = z.object({
   assetName: z.string().describe('The name of the investment asset (e.g., Bitcoin, Gold, Nifty 50 ETF).'),
+  assetType: z.string().describe('The type of asset (e.g., Stocks, Crypto, ETFs).'),
   purchasePrice: z.number().describe('The price at which the asset was purchased.'),
 });
 export type InvestmentAdviceInput = z.infer<typeof InvestmentAdviceInputSchema>;
@@ -67,7 +68,7 @@ export async function generateInvestmentAdvice(input: InvestmentAdviceInput): Pr
 const prompt = ai.definePrompt({
   name: 'investmentAdvicePrompt',
   input: { schema: z.object({ assetName: z.string(), purchasePrice: z.number(), currentPrice: z.number() }) },
-  output: { schema: InvestmentAdviceOutputSchema },
+  output: { schema: Omit<InvestmentAdviceOutput, 'currentPrice'> },
   tools: [getStockPriceTool],
   prompt: `You are an expert financial analyst. Your task is to provide investment advice on a specific asset.
 
@@ -81,7 +82,6 @@ Analyze the current market conditions for this asset. Based on your analysis, de
 - Otherwise, set the signal to 'HOLD'.
 
 Provide a concise, one-paragraph explanation for your recommendation in the 'advice' field.
-Provide the current market price in the 'currentPrice' field.
 
 Finally, set the 'disclaimer' to: "This is AI-generated analysis and not financial advice. Always do your own research and consult with a qualified financial advisor before making investment decisions."`,
 });
@@ -94,16 +94,21 @@ const investmentAdviceFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // For non-stocks, we can't get a price, so we'll just use a mock response.
-    // A real implementation would have different tools for different asset types.
-    const nonStockTypes = ['crypto', 'mutual funds', 'etfs'];
-    const isStock = !nonStockTypes.some(type => input.assetName.toLowerCase().includes(type));
-
     let currentPrice = input.purchasePrice; // Default to purchase price
 
-    if (isStock) {
+    if (input.assetType.toLowerCase() === 'stocks') {
         const stockPrice = await getStockPriceTool({ ticker: input.assetName });
         currentPrice = stockPrice.price;
+    }
+
+    // If we couldn't get a real price for a stock, return early to avoid bad advice.
+    if (input.assetType.toLowerCase() === 'stocks' && currentPrice === 0) {
+      return {
+        signal: 'HOLD',
+        advice: `Could not retrieve a current price for ${input.assetName}. Unable to provide advice at this time.`,
+        currentPrice: 0,
+        disclaimer: "This is AI-generated analysis and not financial advice. Always do your own research and consult with a qualified financial advisor before making investment decisions."
+      };
     }
 
     const { output } = await prompt({
@@ -111,6 +116,10 @@ const investmentAdviceFlow = ai.defineFlow(
         purchasePrice: input.purchasePrice,
         currentPrice: currentPrice,
     });
-    return output!;
+    
+    return {
+        ...output!,
+        currentPrice,
+    };
   }
 );

@@ -55,11 +55,11 @@ export default function InvestmentsPage() {
         return investments.reduce((acc, inv) => acc + inv.purchasePrice, 0);
     }, [investments]);
 
-    const handleGetAdvice = (investmentId: string, assetName: string, purchasePrice: number) => {
+    const handleGetAdvice = (investmentId: string, assetName: string, assetType: string, purchasePrice: number) => {
         setAdvice(prev => ({ ...prev, [investmentId]: { isPending: true, output: null, error: null } }));
 
-        generateInvestmentAdvice({ assetName, purchasePrice }).then(result => {
-            if(result.currentPrice === 0) {
+        generateInvestmentAdvice({ assetName, assetType, purchasePrice }).then(result => {
+            if(result.currentPrice === 0 && assetType.toLowerCase() === 'stocks') {
                  setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: null, error: "Could not fetch price." } }));
             } else {
                 setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: result, error: null } }));
@@ -73,14 +73,12 @@ export default function InvestmentsPage() {
     useEffect(() => {
         if (investments && investments.length > 0) {
             investments.forEach(inv => {
-                const nonStockTypes = ['crypto', 'mutual funds', 'etfs'];
-                const isStock = !nonStockTypes.some(type => inv.type.toLowerCase().includes(type));
-                if (isStock && !advice[inv.id]) {
-                    handleGetAdvice(inv.id, inv.name, inv.purchasePrice);
+                if (inv.type.toLowerCase() === 'stocks' && !advice[inv.id]) {
+                    handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice);
                 }
             });
         }
-    }, [investments]);
+    }, [investments, advice]);
 
 
     const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
@@ -190,7 +188,8 @@ export default function InvestmentsPage() {
                                             const adviceState = advice[inv.id];
                                             const adviceOutput = adviceState?.output;
                                             const currentValue = adviceOutput?.currentPrice;
-                                            const change = currentValue ? ((currentValue - inv.purchasePrice) / inv.purchasePrice) * 100 : 0;
+                                            const change = currentValue && inv.purchasePrice > 0 ? ((currentValue - inv.purchasePrice) / inv.purchasePrice) * 100 : 0;
+                                            const isStock = inv.type.toLowerCase() === 'stocks';
 
                                             return (
                                                 <TableRow key={inv.id}>
@@ -201,18 +200,18 @@ export default function InvestmentsPage() {
                                                         "flex items-center gap-1",
                                                         !currentValue ? "" : change >= 0 ? 'text-green-500' : 'text-red-500'
                                                     )}>
-                                                        {adviceState?.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                                                        {currentValue ? (
+                                                        {isStock && adviceState?.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                                        {isStock && currentValue ? (
                                                             <>
                                                                 {change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                                                                 {currentValue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })} ({change.toFixed(2)}%)
                                                             </>
                                                         ) : (
-                                                            adviceState?.error || 'N/A'
+                                                            isStock ? (adviceState?.error || 'N/A') : 'N/A'
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.purchasePrice)} disabled={advice[inv.id]?.isPending}>
+                                                        <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={advice[inv.id]?.isPending}>
                                                             {advice[inv.id]?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
                                                             Get Advice
                                                         </Button>
