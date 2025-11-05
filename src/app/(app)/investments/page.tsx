@@ -251,8 +251,8 @@ export default function InvestmentsPage() {
                     </CardContent>
                 </Card>
 
-                {Object.entries(advice).map(([id, { output }]) => {
-                    const investment = investments?.find(inv => inv.id === id);
+                {investments && Object.entries(advice).map(([id, { output }]) => {
+                    const investment = investments.find(inv => inv.id === id);
                     if (!output || !investment || !output.advice) return null;
                     return (
                         <Alert key={id} className={cn("mt-4", signalColors[output.signal])}>
