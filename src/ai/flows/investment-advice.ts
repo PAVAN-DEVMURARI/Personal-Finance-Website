@@ -10,8 +10,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import fetch from 'node-fetch';
 
-// This is a placeholder. In a real app, you would fetch this from a financial API.
 const getStockPriceTool = ai.defineTool(
     {
       name: 'getStockPrice',
@@ -20,19 +20,28 @@ const getStockPriceTool = ai.defineTool(
       outputSchema: z.object({ price: z.number() }),
     },
     async ({ ticker }) => {
-        // IMPORTANT: Replace this with a real financial data API call.
-        // You will need an API key from a provider like Alpha Vantage, Finnhub, etc.
-        // Example with Alpha Vantage (you would need to install 'node-fetch'):
-        // const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
-        // const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`;
-        // const response = await fetch(url);
-        // const data = await response.json();
-        // const price = parseFloat(data['Global Quote']['05. price']);
-        // return { price };
-
-        console.log(`Fetching mock price for ${ticker}`);
-        // Returning a random mock price for demonstration purposes.
-        return { price: Math.random() * 1000 + 100 };
+        const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+        if (!apiKey || apiKey === 'YOUR_API_KEY') {
+            console.warn("Alpha Vantage API key not found. Using mock price.");
+            return { price: Math.random() * 1000 + 100 };
+        }
+        
+        const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`;
+        
+        try {
+            const response = await fetch(url);
+            const data: any = await response.json();
+            const price = parseFloat(data['Global Quote']['05. price']);
+            if (isNaN(price)) {
+                console.error(`Could not parse price for ${ticker}. Response:`, data);
+                return { price: 0 };
+            }
+            return { price };
+        } catch (error) {
+            console.error(`Error fetching stock price for ${ticker}:`, error);
+            // Fallback to a mock price or handle the error appropriately
+            return { price: 0 };
+        }
     }
 );
 
