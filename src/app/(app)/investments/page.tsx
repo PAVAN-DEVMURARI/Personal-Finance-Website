@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
@@ -22,6 +22,7 @@ type AdviceState = {
     [key: string]: {
         isPending: boolean;
         output: InvestmentAdviceOutput | null;
+        error?: string | null;
     };
 };
 
@@ -55,15 +56,32 @@ export default function InvestmentsPage() {
     }, [investments]);
 
     const handleGetAdvice = (investmentId: string, assetName: string, purchasePrice: number) => {
-        setAdvice(prev => ({ ...prev, [investmentId]: { isPending: true, output: null } }));
+        setAdvice(prev => ({ ...prev, [investmentId]: { isPending: true, output: null, error: null } }));
 
         generateInvestmentAdvice({ assetName, purchasePrice }).then(result => {
-            setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: result } }));
+            if(result.currentPrice === 0) {
+                 setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: null, error: "Could not fetch price." } }));
+            } else {
+                setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: result, error: null } }));
+            }
         }).catch(err => {
             console.error(err);
-            setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: null } }));
+            setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: null, error: "An error occurred." } }));
         });
     };
+    
+    useEffect(() => {
+        if (investments && investments.length > 0) {
+            investments.forEach(inv => {
+                const nonStockTypes = ['crypto', 'mutual funds', 'etfs'];
+                const isStock = !nonStockTypes.some(type => inv.type.toLowerCase().includes(type));
+                if (isStock && !advice[inv.id]) {
+                    handleGetAdvice(inv.id, inv.name, inv.purchasePrice);
+                }
+            });
+        }
+    }, [investments]);
+
 
     const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -169,7 +187,8 @@ export default function InvestmentsPage() {
                                         ))
                                     ) : investments && investments.length > 0 ? (
                                         investments.map((inv) => {
-                                            const adviceOutput = advice[inv.id]?.output;
+                                            const adviceState = advice[inv.id];
+                                            const adviceOutput = adviceState?.output;
                                             const currentValue = adviceOutput?.currentPrice;
                                             const change = currentValue ? ((currentValue - inv.purchasePrice) / inv.purchasePrice) * 100 : 0;
 
@@ -182,13 +201,14 @@ export default function InvestmentsPage() {
                                                         "flex items-center gap-1",
                                                         !currentValue ? "" : change >= 0 ? 'text-green-500' : 'text-red-500'
                                                     )}>
+                                                        {adviceState?.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
                                                         {currentValue ? (
                                                             <>
                                                                 {change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
                                                                 {currentValue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })} ({change.toFixed(2)}%)
                                                             </>
                                                         ) : (
-                                                            'N/A'
+                                                            adviceState?.error || 'N/A'
                                                         )}
                                                     </TableCell>
                                                     <TableCell>
