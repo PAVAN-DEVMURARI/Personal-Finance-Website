@@ -14,10 +14,9 @@ import { getSdks } from '.';
 
 type ErrorCallback = (error: FirebaseError) => void;
 
-function createProfile(userCredential: UserCredential) {
+function createProfile(userCredential: UserCredential, firstName: string, lastName: string) {
     const { firestore } = getSdks(userCredential.user.provider.app);
     const user = userCredential.user;
-    const [firstName, lastName] = user.displayName?.split(' ') || ['', ''];
     const profileRef = doc(firestore, 'users', user.uid);
     setDocumentNonBlocking(profileRef, {
         id: user.uid,
@@ -34,9 +33,9 @@ export function initiateAnonymousSignIn(authInstance: Auth, onError?: ErrorCallb
 }
 
 /** Initiate email/password sign-up (non-blocking). */
-export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, onError?: ErrorCallback): void {
+export function initiateEmailSignUp(authInstance: Auth, email: string, password: string, firstName: string, lastName: string, onError?: ErrorCallback): void {
   createUserWithEmailAndPassword(authInstance, email, password)
-    .then(createProfile)
+    .then((userCredential) => createProfile(userCredential, firstName, lastName))
     .catch(onError);
 }
 
@@ -44,5 +43,3 @@ export function initiateEmailSignUp(authInstance: Auth, email: string, password:
 export function initiateEmailSignIn(authInstance: Auth, email: string, password: string, onError?: ErrorCallback): void {
   signInWithEmailAndPassword(authInstance, email, password).catch(onError);
 }
-
-    

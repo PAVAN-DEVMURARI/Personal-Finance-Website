@@ -35,6 +35,8 @@ function LoginPageContent() {
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ function LoginPageContent() {
     };
 
     if (isSigningUp) {
-      initiateEmailSignUp(auth, email, password, handleError);
+      initiateEmailSignUp(auth, email, password, firstName, lastName, handleError);
     } else {
       initiateEmailSignIn(auth, email, password, handleError);
     }
@@ -83,6 +85,20 @@ function LoginPageContent() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAuthAction} className="grid gap-4">
+            {isSigningUp && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input id="firstName" placeholder="John" required value={firstName} onChange={e => setFirstName(e.target.value)} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input id="lastName" placeholder="Doe" required value={lastName} onChange={e => setLastName(e.target.value)} />
+                    </div>
+                </div>
+              </>
+            )}
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
