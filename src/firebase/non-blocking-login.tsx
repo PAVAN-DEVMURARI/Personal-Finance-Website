@@ -4,10 +4,10 @@ import {
   signInAnonymously,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  FirebaseError,
   UserCredential,
   // Assume getAuth and app are initialized elsewhere
 } from 'firebase/auth';
+import { FirebaseError, getApp } from 'firebase/app';
 import { setDocumentNonBlocking } from './non-blocking-updates';
 import { doc } from 'firebase/firestore';
 import { getSdks } from '.';
@@ -15,7 +15,7 @@ import { getSdks } from '.';
 type ErrorCallback = (error: FirebaseError) => void;
 
 function createProfile(userCredential: UserCredential, firstName: string, lastName: string) {
-    const { firestore } = getSdks(userCredential.user.provider.app);
+    const { firestore } = getSdks(getApp());
     const user = userCredential.user;
     const profileRef = doc(firestore, 'users', user.uid);
     setDocumentNonBlocking(profileRef, {
