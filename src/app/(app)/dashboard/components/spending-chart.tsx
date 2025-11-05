@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import { collection, query, where } from 'firebase/firestore';
-import { TrendingUp } from 'lucide-react';
 import { Pie, PieChart, Cell } from 'recharts';
 import {
   Card,
@@ -27,7 +26,7 @@ export function SpendingChart() {
   const monthStart = startOfMonth(now);
   const monthEnd = endOfMonth(now);
 
-  const query = useMemoFirebase(() => {
+  const spendingQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
     return query(
       collection(firestore, 'users', user.uid, 'expenses'),
@@ -36,7 +35,7 @@ export function SpendingChart() {
     );
   }, [firestore, user?.uid, monthStart, monthEnd]);
 
-  const { data: transactions, isLoading } = useCollection(query);
+  const { data: transactions, isLoading } = useCollection(spendingQuery);
 
   const spendingByCategory = useMemo(() => {
     if (!transactions) return {};
