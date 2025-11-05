@@ -5,9 +5,11 @@ import { collection } from 'firebase/firestore';
 import { BrainCircuit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle , CardFooter } from "@/components/ui/card";
-import { generateMonthlyReport, type MonthlyReportInput, type MonthlyReportOutput } from "@/ai/flows/monthly-ai-financial-report";
+import { generateMonthlyReport, type MonthlyReportInput } from "@/ai/flows/monthly-ai-financial-report";
 import { Separator } from "@/components/ui/separator";
 import { useCollection, useFirebase, useMemoFirebase } from "@/firebase";
+import type { MonthlyReportOutput } from "@/ai/flows/monthly-ai-financial-report";
+
 
 export function AiReportCard() {
     const [isPending, startTransition] = useTransition();
@@ -38,9 +40,12 @@ export function AiReportCard() {
         return {
             income: income.reduce((sum, t) => sum + t.amount, 0),
             expenses: expenses.reduce((sum, t) => sum + t.amount, 0),
-            investments: investments.reduce((sum, i) => sum + i.purchasePrice, 0),
             spendingByCategory: expenses.reduce((acc, t) => ({...acc, [t.category]: (acc[t.category] || 0) + t.amount }), {} as Record<string, number>),
-            investmentPortfolio: investments.reduce((acc, i) => ({...acc, [i.type]: (acc[i.type] || 0) + i.purchasePrice }), {} as Record<string, number>),
+            investmentPortfolio: investments.map(inv => ({
+                name: inv.name,
+                type: inv.type,
+                value: inv.purchasePrice,
+            })),
         }
     }, [expenses, income, investments]);
 
