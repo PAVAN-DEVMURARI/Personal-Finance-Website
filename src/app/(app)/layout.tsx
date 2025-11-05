@@ -43,12 +43,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
 
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
-
   const sidebarNav = (
     <nav className="grid items-start gap-2 px-4 text-sm font-medium">
       {navItems.map((item) => (
@@ -68,10 +62,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
       ))}
     </nav>
   );
-
-  if (isUserLoading || !user) {
-    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
-  }
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
