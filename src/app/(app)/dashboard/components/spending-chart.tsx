@@ -20,6 +20,17 @@ import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { startOfMonth, endOfMonth } from 'date-fns';
 
+// Stable color mapping based on category name
+const getStableColor = (category: string) => {
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+        hash = category.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const colorIndex = Math.abs(hash % 5) + 1; // 5 chart colors available
+    return `hsl(var(--chart-${colorIndex}))`;
+};
+
+
 export function SpendingChart() {
   const { firestore, user } = useFirebase();
   const now = new Date();
@@ -53,7 +64,7 @@ export function SpendingChart() {
   const chartData = useMemo(() => Object.entries(spendingByCategory).map(([category, amount]) => ({
     category,
     amount,
-    fill: `hsl(var(--chart-${(Object.keys(spendingByCategory).indexOf(category) % 5) + 1}))`,
+    fill: getStableColor(category),
   })), [spendingByCategory]);
 
   const chartConfig = useMemo(() => ({
