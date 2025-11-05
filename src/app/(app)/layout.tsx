@@ -40,7 +40,14 @@ const navItems = [
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isUserLoading } = useUser();
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
 
   const sidebarNav = (
     <nav className="grid items-start gap-2 px-4 text-sm font-medium">
@@ -62,7 +69,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     </nav>
   );
 
-  if (isUserLoading) {
+  if (isUserLoading || !user) {
     return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
   }
 
@@ -155,19 +162,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const { user, isUserLoading } = useUser();
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
-
-  if (isUserLoading || !user) {
-    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
-  }
-  
   return (
     <FirebaseClientProvider>
       <AppLayoutContent>{children}</AppLayoutContent>
