@@ -38,6 +38,22 @@ const signalColors: { [key: string]: string } = {
     HOLD: 'border-yellow-500/50',
 };
 
+const ChangeCell = ({ value }: { value?: number }) => {
+    if (value === undefined) {
+        return <span className="text-muted-foreground">N/A</span>;
+    }
+    const isPositive = value >= 0;
+    return (
+        <span className={cn(
+            "flex items-center gap-1",
+            isPositive ? 'text-green-500' : 'text-red-500'
+        )}>
+            {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
+            {value.toFixed(2)}%
+        </span>
+    );
+};
+
 export default function InvestmentsPage() {
     const { firestore, user } = useFirebase();
     const [advice, setAdvice] = useState<AdviceState>({});
@@ -59,11 +75,7 @@ export default function InvestmentsPage() {
         setAdvice(prev => ({ ...prev, [investmentId]: { isPending: true, output: null, error: null } }));
 
         generateInvestmentAdvice({ assetName, assetType, purchasePrice }).then(result => {
-            if(result.currentPrice === 0 && assetType.toLowerCase() === 'stocks') {
-                 setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: null, error: "Could not fetch price." } }));
-            } else {
-                setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: result, error: null } }));
-            }
+            setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: result, error: null } }));
         }).catch(err => {
             console.error(err);
             setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: null, error: "An error occurred." } }));
@@ -78,7 +90,7 @@ export default function InvestmentsPage() {
                 }
             });
         }
-    }, [investments, advice]);
+    }, [investments]);
 
 
     const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
@@ -162,8 +174,8 @@ export default function InvestmentsPage() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Your Portfolio</CardTitle>
-                        <CardDescription>A detailed view of your current investments with AI-powered advice.</CardDescription>
+                        <CardTitle>Your Portfolio Performance</CardTitle>
+                        <CardDescription>Historical performance of your stock investments.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -172,8 +184,10 @@ export default function InvestmentsPage() {
                                     <TableRow>
                                         <TableHead>Name</TableHead>
                                         <TableHead>Type</TableHead>
-                                        <TableHead>Purchase Price</TableHead>
-                                        <TableHead>Current Value</TableHead>
+                                        <TableHead>1W %</TableHead>
+                                        <TableHead>1M %</TableHead>
+                                        <TableHead>1Y %</TableHead>
+                                        <TableHead>5Y %</TableHead>
                                         <TableHead>AI Advice</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
@@ -181,39 +195,32 @@ export default function InvestmentsPage() {
                                 <TableBody>
                                     {isLoading ? (
                                         [...Array(3)].map((_, i) => (
-                                            <TableRow key={i}><TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                                            <TableRow key={i}><TableCell colSpan={8}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
                                         ))
                                     ) : investments && investments.length > 0 ? (
                                         investments.map((inv) => {
                                             const adviceState = advice[inv.id];
-                                            const adviceOutput = adviceState?.output;
-                                            const currentValue = adviceOutput?.currentPrice;
-                                            const change = currentValue && inv.purchasePrice > 0 ? ((currentValue - inv.purchasePrice) / inv.purchasePrice) * 100 : 0;
+                                            const performance = adviceState?.output?.performance;
                                             const isStock = inv.type.toLowerCase() === 'stocks';
 
                                             return (
                                                 <TableRow key={inv.id}>
                                                     <TableCell className="font-medium">{inv.name}</TableCell>
                                                     <TableCell><Badge variant="outline">{inv.type}</Badge></TableCell>
-                                                    <TableCell>{inv.purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
-                                                    <TableCell className={cn(
-                                                        "flex items-center gap-1",
-                                                        !currentValue ? "" : change >= 0 ? 'text-green-500' : 'text-red-500'
-                                                    )}>
-                                                        {isStock && adviceState?.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-                                                        {isStock && currentValue ? (
-                                                            <>
-                                                                {change >= 0 ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-                                                                {currentValue.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })} ({change.toFixed(2)}%)
-                                                            </>
-                                                        ) : (
-                                                            isStock ? (adviceState?.error || 'N/A') : 'N/A'
-                                                        )}
-                                                    </TableCell>
+                                                    {adviceState?.isPending ? (
+                                                        <TableCell colSpan={4}><Loader2 className="h-4 w-4 animate-spin" /></TableCell>
+                                                    ) : (
+                                                        <>
+                                                            <TableCell><ChangeCell value={isStock ? performance?.weeklyChange : undefined} /></TableCell>
+                                                            <TableCell><ChangeCell value={isStock ? performance?.monthlyChange : undefined} /></TableCell>
+                                                            <TableCell><ChangeCell value={isStock ? performance?.yearlyChange : undefined} /></TableCell>
+                                                            <TableCell><ChangeCell value={isStock ? performance?.fiveYearlyChange : undefined} /></TableCell>
+                                                        </>
+                                                    )}
                                                     <TableCell>
                                                         <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={advice[inv.id]?.isPending}>
                                                             {advice[inv.id]?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
-                                                            Get Advice
+                                                            {adviceState?.output ? 'Refresh' : 'Get Advice'}
                                                         </Button>
                                                     </TableCell>
                                                     <TableCell>
@@ -225,7 +232,7 @@ export default function InvestmentsPage() {
                                             );
                                         })
                                     ) : (
-                                        <TableRow><TableCell colSpan={6} className="text-center">No investments yet.</TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={8} className="text-center">No investments yet.</TableCell></TableRow>
                                     )}
                                 </TableBody>
                             </Table>
@@ -235,7 +242,7 @@ export default function InvestmentsPage() {
 
                 {Object.entries(advice).map(([id, { output }]) => {
                     const investment = investments?.find(inv => inv.id === id);
-                    if (!output || !investment) return null;
+                    if (!output || !investment || !output.advice) return null;
                     return (
                         <Alert key={id} className={cn("mt-4", signalColors[output.signal])}>
                              {signalIcons[output.signal as keyof typeof signalIcons]}
