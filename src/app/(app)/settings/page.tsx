@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { useEffect } from 'react';
+import { doc } from 'firebase/firestore';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -10,7 +10,7 @@ import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useDoc, useFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useDoc, useFirebase, updateDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -25,10 +25,14 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function SettingsPage() {
-  const { firestore, user } = useFirebase();
+  const { firestore, user, isUserLoading } = useFirebase();
   const { toast } = useToast();
 
-  const userDocRef = user ? doc(firestore, 'users', user.uid) : null;
+  const userDocRef = useMemoFirebase(() => {
+      if (!firestore || !user?.uid) return null;
+      return doc(firestore, 'users', user.uid);
+  }, [firestore, user?.uid]);
+  
   const { data: userProfile, isLoading: isProfileLoading } = useDoc(userDocRef);
 
   const form = useForm<ProfileFormValues>({
@@ -59,7 +63,9 @@ export default function SettingsPage() {
     });
   };
 
-  if (isProfileLoading || !userProfile) {
+  const isLoading = isUserLoading || (user && isProfileLoading);
+
+  if (isLoading) {
     return (
       <>
         <PageHeader title="Settings" />
