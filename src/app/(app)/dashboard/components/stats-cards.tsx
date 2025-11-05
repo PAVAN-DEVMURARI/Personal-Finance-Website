@@ -1,24 +1,36 @@
 'use client';
 
 import { useMemo } from 'react';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 export function StatsCards() {
   const { firestore, user } = useFirebase();
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
 
   const expensesQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    return collection(firestore, 'users', user.uid, 'expenses');
-  }, [firestore, user?.uid]);
+    return query(
+      collection(firestore, 'users', user.uid, 'expenses'),
+      where('date', '>=', monthStart.toISOString()),
+      where('date', '<=', monthEnd.toISOString())
+    );
+  }, [firestore, user?.uid, monthStart, monthEnd]);
   
   const incomeQuery = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    return collection(firestore, 'users', user.uid, 'income');
-  }, [firestore, user?.uid]);
+    return query(
+      collection(firestore, 'users', user.uid, 'income'),
+      where('date', '>=', monthStart.toISOString()),
+      where('date', '<=', monthEnd.toISOString())
+    );
+  }, [firestore, user?.uid, monthStart, monthEnd]);
 
   const { data: expenses, isLoading: expensesLoading } = useCollection(expensesQuery);
   const { data: income, isLoading: incomeLoading } = useCollection(incomeQuery);
@@ -30,9 +42,9 @@ export function StatsCards() {
   const isLoading = expensesLoading || incomeLoading;
 
   const stats = [
-    { title: "Total Income", amount: totalIncome, icon: ArrowUpRight, color: "text-green-500" },
-    { title: "Total Expenses", amount: totalExpenses, icon: ArrowDownLeft, color: "text-red-500" },
-    { title: "Net Balance", amount: netBalance, icon: Scale, color: "text-blue-500" },
+    { title: "This Month's Income", amount: totalIncome, icon: ArrowUpRight, color: "text-green-500" },
+    { title: "This Month's Expenses", amount: totalExpenses, icon: ArrowDownLeft, color: "text-red-500" },
+    { title: "This Month's Balance", amount: netBalance, icon: Scale, color: "text-blue-500" },
   ];
 
   if (isLoading) {
@@ -57,7 +69,7 @@ export function StatsCards() {
             <div className="text-2xl font-bold">
               {stat.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
             </div>
-            <p className="text-xs text-muted-foreground">+0% from last month</p>
+            {/* <p className="text-xs text-muted-foreground">+0% from last month</p> */}
           </CardContent>
         </Card>
       ))}

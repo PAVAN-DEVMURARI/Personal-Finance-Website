@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { collection } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 import { TrendingUp } from 'lucide-react';
 import { Pie, PieChart, Cell } from 'recharts';
 import {
@@ -19,14 +19,22 @@ import {
 } from '@/components/ui/chart';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 export function SpendingChart() {
   const { firestore, user } = useFirebase();
+  const now = new Date();
+  const monthStart = startOfMonth(now);
+  const monthEnd = endOfMonth(now);
 
   const query = useMemoFirebase(() => {
     if (!firestore || !user?.uid) return null;
-    return collection(firestore, 'users', user.uid, 'expenses');
-  }, [firestore, user?.uid]);
+    return query(
+      collection(firestore, 'users', user.uid, 'expenses'),
+      where('date', '>=', monthStart.toISOString()),
+      where('date', '<=', monthEnd.toISOString())
+    );
+  }, [firestore, user?.uid, monthStart, monthEnd]);
 
   const { data: transactions, isLoading } = useCollection(query);
 
@@ -34,10 +42,11 @@ export function SpendingChart() {
     if (!transactions) return {};
     return transactions
       .reduce((acc, t) => {
-        if (!acc[t.category]) {
-          acc[t.category] = 0;
+        const category = t.category || 'Uncategorized';
+        if (!acc[category]) {
+          acc[category] = 0;
         }
-        acc[t.category] += t.amount;
+        acc[category] += t.amount;
         return acc;
       }, {} as Record<string, number>);
   }, [transactions]);
@@ -50,16 +59,30 @@ export function SpendingChart() {
 
   const chartConfig = useMemo(() => ({
     amount: {
-      label: 'Amount',
+      label: 'Amount (INR)',
     },
     ...chartData.reduce((acc, { category }) => {
       acc[category] = { label: category };
       return acc;
     }, {} as any)
   }), [chartData]);
-
+  
   if (isLoading) {
-    return <Skeleton className="h-full" />;
+    return (
+        <Card className="flex flex-col h-full">
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="flex-1 pb-0 flex items-center justify-center">
+                <Skeleton className="aspect-square w-full max-w-[300px] rounded-full" />
+            </CardContent>
+            <CardFooter className="flex-col gap-2 text-sm">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardFooter>
+        </Card>
+    );
   }
 
   return (
@@ -75,7 +98,19 @@ export function SpendingChart() {
         >
           {chartData.length > 0 ? (
             <PieChart>
-              <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+              <ChartTooltip 
+                cursor={false} 
+                content={<ChartTooltipContent 
+                    hideLabel 
+                    formatter={(value, name, item) => (
+                        <div className="flex items-center gap-2">
+                           <div className="w-2.5 h-2.5 rounded-sm" style={{backgroundColor: item.payload.fill}} />
+                           <div className="flex-1">{item.payload.category}</div>
+                           <div className="font-bold">{Number(value).toLocaleString('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 })}</div>
+                        </div>
+                    )}
+                />} 
+              />
               <Pie
                 data={chartData}
                 dataKey="amount"
@@ -90,17 +125,14 @@ export function SpendingChart() {
             </PieChart>
           ) : (
             <div className="flex h-full items-center justify-center text-muted-foreground">
-                No spending data yet.
+                No spending data for this month.
             </div>
           )}
         </ChartContainer>
       </CardContent>
       <CardFooter className="flex-col gap-2 text-sm">
-        <div className="flex items-center gap-2 font-medium leading-none">
-          Trending up by 0% this month <TrendingUp className="h-4 w-4" />
-        </div>
         <div className="leading-none text-muted-foreground">
-          Track your spending to see insights.
+          Log expenses to see your spending breakdown.
         </div>
       </CardFooter>
     </Card>
