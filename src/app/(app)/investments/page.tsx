@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
+import { PlusCircle, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,7 +10,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
-import { getPortfolioPerformance, type PortfolioPerformanceOutput } from '@/ai/flows/get-portfolio-performance';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -27,12 +26,6 @@ type AdviceState = {
     };
 };
 
-type PerformanceState = {
-    isPending: boolean;
-    data: PortfolioPerformanceOutput | null;
-    error?: string | null;
-}
-
 const signalIcons = {
     BUY: <ShieldCheck className="h-4 w-4 text-green-500" />,
     SELL: <AlertTriangle className="h-4 w-4 text-red-500" />,
@@ -44,23 +37,6 @@ const signalColors: { [key: string]: string } = {
     SELL: 'border-red-500/50',
     HOLD: 'border-yellow-500/50',
 };
-
-const ChangeCell = ({ value }: { value?: number }) => {
-    if (value === undefined || value === null) {
-        return <span className="text-muted-foreground">N/A</span>;
-    }
-    const isPositive = value >= 0;
-    return (
-        <span className={cn(
-            "flex items-center gap-1",
-            isPositive ? 'text-green-500' : 'text-red-500'
-        )}>
-            {isPositive ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}
-            {value.toFixed(2)}%
-        </span>
-    );
-};
-
 
 function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: boolean, onOpenChange: (open: boolean) => void, user: any, firestore: any }) {
     const [selectedType, setSelectedType] = useState('Stocks');
@@ -125,7 +101,6 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
 export default function InvestmentsPage() {
     const { firestore, user } = useFirebase();
     const [advice, setAdvice] = useState<AdviceState>({});
-    const [performanceData, setPerformanceData] = useState<PerformanceState>({ isPending: true, data: null });
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
     const query = useMemoFirebase(() => {
@@ -138,30 +113,6 @@ export default function InvestmentsPage() {
     const totalInvestments = useMemo(() => {
         if (!investments) return 0;
         return investments.reduce((acc, inv) => acc + inv.purchasePrice, 0);
-    }, [investments]);
-
-    useEffect(() => {
-        if (investments && investments.length > 0) {
-            const stockTickers = investments
-                .filter(inv => inv.type.toLowerCase() === 'stocks')
-                .map(inv => inv.name);
-
-            if (stockTickers.length > 0) {
-                setPerformanceData({ isPending: true, data: null, error: null });
-                getPortfolioPerformance({ tickers: stockTickers })
-                    .then(data => {
-                        setPerformanceData({ isPending: false, data, error: null });
-                    })
-                    .catch(error => {
-                        console.error("Error fetching portfolio performance:", error);
-                        setPerformanceData({ isPending: false, data: null, error: "Failed to fetch performance." });
-                    });
-            } else {
-                 setPerformanceData({ isPending: false, data: null, error: null });
-            }
-        } else if (investments) {
-            setPerformanceData({ isPending: false, data: null, error: null });
-        }
     }, [investments]);
 
     const handleGetAdvice = (investmentId: string, assetName: string, assetType: string, purchasePrice: number) => {
@@ -186,7 +137,7 @@ export default function InvestmentsPage() {
         })
     }
     
-    const isDataLoading = isLoading || performanceData.isPending;
+    const isDataLoading = isLoading;
 
     return (
         <>
@@ -211,8 +162,8 @@ export default function InvestmentsPage() {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Your Portfolio Performance</CardTitle>
-                        <CardDescription>Historical performance of your stock investments.</CardDescription>
+                        <CardTitle>Your Portfolio</CardTitle>
+                        <CardDescription>A list of your current investments.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
@@ -222,10 +173,6 @@ export default function InvestmentsPage() {
                                         <TableHead>Name</TableHead>
                                         <TableHead>Type</TableHead>
                                         <TableHead>Purchase Price</TableHead>
-                                        <TableHead>1W %</TableHead>
-                                        <TableHead>1M %</TableHead>
-                                        <TableHead>1Y %</TableHead>
-                                        <TableHead>5Y %</TableHead>
                                         <TableHead>AI Advice</TableHead>
                                         <TableHead className="w-[50px]"></TableHead>
                                     </TableRow>
@@ -233,23 +180,17 @@ export default function InvestmentsPage() {
                                 <TableBody>
                                     {isDataLoading ? (
                                         [...Array(3)].map((_, i) => (
-                                            <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                                            <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
                                         ))
                                     ) : investments && investments.length > 0 ? (
                                         investments.map((inv) => {
                                             const adviceState = advice[inv.id];
-                                            const perf = performanceData.data?.[inv.name];
-                                            const isStock = inv.type.toLowerCase() === 'stocks';
 
                                             return (
                                                 <TableRow key={inv.id}>
                                                     <TableCell className="font-medium">{inv.name}</TableCell>
                                                     <TableCell><Badge variant="outline">{inv.type}</Badge></TableCell>
                                                     <TableCell>{inv.purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
-                                                    <TableCell><ChangeCell value={isStock ? perf?.weeklyChange : undefined} /></TableCell>
-                                                    <TableCell><ChangeCell value={isStock ? perf?.monthlyChange : undefined} /></TableCell>
-                                                    <TableCell><ChangeCell value={isStock ? perf?.yearlyChange : undefined} /></TableCell>
-                                                    <TableCell><ChangeCell value={isStock ? perf?.fiveYearlyChange : undefined} /></TableCell>
                                                     
                                                     <TableCell>
                                                         <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={adviceState?.isPending}>
@@ -266,7 +207,7 @@ export default function InvestmentsPage() {
                                             );
                                         })
                                     ) : (
-                                        <TableRow><TableCell colSpan={9} className="text-center">No investments yet.</TableCell></TableRow>
+                                        <TableRow><TableCell colSpan={5} className="text-center">No investments yet.</TableCell></TableRow>
                                     )}
                                 </TableBody>
                             </Table>
