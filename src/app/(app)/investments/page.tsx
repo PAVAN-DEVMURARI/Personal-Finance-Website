@@ -1,7 +1,7 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
-import { collection, doc, serverTimestamp, getDocs, query, where, updateDoc, addDoc } from 'firebase/firestore';
+import { useMemo, useState } from 'react';
+import { collection, doc, serverTimestamp, updateDoc, addDoc } from 'firebase/firestore';
 import { PlusCircle, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useCollection, useFirebase, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
+import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -55,21 +55,22 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore, investments 
         const purchaseDate = new Date(formData.get('purchaseDate') as string).toISOString();
 
         try {
-            const investmentsRef = collection(firestore, 'users', user.uid, 'investments');
-            const q = query(investmentsRef, where("name", "==", name), where("type", "==", type));
-            const querySnapshot = await getDocs(q);
+            const existingInvestment = investments?.find(
+                inv => inv.name.toLowerCase() === name.toLowerCase() && inv.type === type
+            );
 
-            if (!querySnapshot.empty) {
+            if (existingInvestment) {
                 // Investment exists, update it
-                const existingDoc = querySnapshot.docs[0];
-                const newTotal = existingDoc.data().purchasePrice + purchasePrice;
-                await updateDoc(existingDoc.ref, { purchasePrice: newTotal });
+                const docRef = doc(firestore, 'users', user.uid, 'investments', existingInvestment.id);
+                const newTotal = existingInvestment.purchasePrice + purchasePrice;
+                await updateDoc(docRef, { purchasePrice: newTotal });
                  toast({
                     title: "Investment Updated",
                     description: `Added ${purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })} to ${name}.`,
                 });
             } else {
                 // Investment doesn't exist, create it
+                const investmentsRef = collection(firestore, 'users', user.uid, 'investments');
                 const newInvestment = {
                     name,
                     type,
@@ -115,7 +116,7 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore, investments 
                             <SelectContent>
                                 <SelectItem value="Stocks">Stocks</SelectItem>
                                 <SelectItem value="Crypto">Crypto</SelectItem>
-                                <SelectItem value="Mutual Funds">Mutual Funds</SelectItem>
+                                <SelectItem value="Mutual Fund">Mutual Fund</SelectItem>
                                 <SelectItem value="ETFs">ETFs</SelectItem>
                             </SelectContent>
                         </Select>
@@ -165,12 +166,16 @@ export default function InvestmentsPage() {
     const handleDeleteInvestment = (id: string) => {
         if(!firestore || !user?.uid) return;
         const docRef = doc(firestore, 'users', user.uid, 'investments', id);
-        deleteDocumentNonBlocking(docRef);
-        setAdvice(prev => {
-            const newState = {...prev};
-            delete newState[id];
-            return newState;
-        })
+        // Using `deleteDoc` directly from firebase/firestore and handling promise
+        deleteDoc(docRef).then(() => {
+            setAdvice(prev => {
+                const newState = {...prev};
+                delete newState[id];
+                return newState;
+            })
+        }).catch(error => {
+            console.error("Error deleting investment: ", error);
+        });
     }
     
     const isDataLoading = isLoading;
