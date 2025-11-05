@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { collection, doc, serverTimestamp, updateDoc, addDoc } from 'firebase/firestore';
+import { collection, doc, serverTimestamp, updateDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { PlusCircle, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
