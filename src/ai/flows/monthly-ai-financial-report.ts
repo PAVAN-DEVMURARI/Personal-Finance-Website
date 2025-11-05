@@ -39,21 +39,21 @@ const prompt = ai.definePrompt({
   name: 'monthlyReportPrompt',
   input: {schema: MonthlyReportInputSchema},
   output: {schema: MonthlyReportOutputSchema},
-  prompt: `You are an AI financial advisor. Generate a concise monthly financial report based on the following data:
+  prompt: `You are an AI financial advisor. All financial figures are in Indian Rupees (INR). Please use the '₹' symbol for all currency values. Generate a concise monthly financial report based on the following data:
 
-Income: {{{income}}}
-Expenses: {{{expenses}}}
+Income: ₹{{{income}}}
+Expenses: ₹{{{expenses}}}
 Spending by Category:
 {{#each spendingByCategory}}
-- {{@key}}: {{{this}}}
+- {{@key}}: ₹{{{this}}}
 {{/each}}
 
 Investment Portfolio:
 {{#each investmentPortfolio}}
-- {{name}} ({{type}}): {{{value}}}
+- {{name}} ({{type}}): ₹{{{value}}}
 {{/each}}
 
-Analyze the user's income, expenses, and detailed investment portfolio. In the 'report' field, provide a summary of their financial health. In the 'feedback' field, provide personalized, actionable advice. Comment on their spending habits and the composition of their investment portfolio.`,
+Analyze the user's income, expenses, and detailed investment portfolio. In the 'report' field, provide a summary of their financial health. In the 'feedback' field, provide personalized, actionable advice. Comment on their spending habits and the composition of their investment portfolio. Ensure all monetary values are prefixed with the '₹' symbol.`,
 });
 
 const monthlyReportFlow = ai.defineFlow(
