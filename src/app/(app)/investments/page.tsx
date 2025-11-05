@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
+import { getPortfolioPerformance, type PortfolioPerformanceOutput } from '@/ai/flows/get-portfolio-performance';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -25,6 +26,12 @@ type AdviceState = {
         error?: string | null;
     };
 };
+
+type PerformanceState = {
+    isPending: boolean;
+    data: PortfolioPerformanceOutput | null;
+    error?: string | null;
+}
 
 const signalIcons = {
     BUY: <ShieldCheck className="h-4 w-4 text-green-500" />,
@@ -57,6 +64,7 @@ const ChangeCell = ({ value }: { value?: number }) => {
 export default function InvestmentsPage() {
     const { firestore, user } = useFirebase();
     const [advice, setAdvice] = useState<AdviceState>({});
+    const [performanceData, setPerformanceData] = useState<PerformanceState>({ isPending: true, data: null });
     const [isAddDialogOpen, setAddDialogOpen] = useState(false);
 
     const query = useMemoFirebase(() => {
@@ -71,6 +79,30 @@ export default function InvestmentsPage() {
         return investments.reduce((acc, inv) => acc + inv.purchasePrice, 0);
     }, [investments]);
 
+    useEffect(() => {
+        if (investments && investments.length > 0) {
+            const stockTickers = investments
+                .filter(inv => inv.type.toLowerCase() === 'stocks')
+                .map(inv => inv.name);
+
+            if (stockTickers.length > 0) {
+                setPerformanceData({ isPending: true, data: null, error: null });
+                getPortfolioPerformance({ tickers: stockTickers })
+                    .then(data => {
+                        setPerformanceData({ isPending: false, data, error: null });
+                    })
+                    .catch(error => {
+                        console.error("Error fetching portfolio performance:", error);
+                        setPerformanceData({ isPending: false, data: null, error: "Failed to fetch performance." });
+                    });
+            } else {
+                 setPerformanceData({ isPending: false, data: null, error: null });
+            }
+        } else if (investments) {
+            setPerformanceData({ isPending: false, data: null, error: null });
+        }
+    }, [investments]);
+
     const handleGetAdvice = (investmentId: string, assetName: string, assetType: string, purchasePrice: number) => {
         setAdvice(prev => ({ ...prev, [investmentId]: { isPending: true, output: null, error: null } }));
 
@@ -81,17 +113,6 @@ export default function InvestmentsPage() {
             setAdvice(prev => ({ ...prev, [investmentId]: { isPending: false, output: null, error: "An error occurred." } }));
         });
     };
-    
-    useEffect(() => {
-        if (investments && investments.length > 0) {
-            investments.forEach(inv => {
-                if (inv.type.toLowerCase() === 'stocks' && !advice[inv.id]) {
-                    handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice);
-                }
-            });
-        }
-    }, [investments]);
-
 
     const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -122,6 +143,8 @@ export default function InvestmentsPage() {
             return newState;
         })
     }
+    
+    const isDataLoading = isLoading || performanceData.isPending;
 
     return (
         <>
@@ -194,14 +217,14 @@ export default function InvestmentsPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {isLoading ? (
+                                    {isDataLoading ? (
                                         [...Array(3)].map((_, i) => (
                                             <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
                                         ))
                                     ) : investments && investments.length > 0 ? (
                                         investments.map((inv) => {
                                             const adviceState = advice[inv.id];
-                                            const performance = adviceState?.output?.performance;
+                                            const perf = performanceData.data?.[inv.name];
                                             const isStock = inv.type.toLowerCase() === 'stocks';
 
                                             return (
@@ -209,21 +232,14 @@ export default function InvestmentsPage() {
                                                     <TableCell className="font-medium">{inv.name}</TableCell>
                                                     <TableCell><Badge variant="outline">{inv.type}</Badge></TableCell>
                                                     <TableCell>{inv.purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
-                                                    
-                                                    {adviceState?.isPending && isStock ? (
-                                                        <TableCell colSpan={4}><Loader2 className="h-4 w-4 animate-spin" /></TableCell>
-                                                    ) : (
-                                                        <>
-                                                            <TableCell><ChangeCell value={isStock ? performance?.weeklyChange : undefined} /></TableCell>
-                                                            <TableCell><ChangeCell value={isStock ? performance?.monthlyChange : undefined} /></TableCell>
-                                                            <TableCell><ChangeCell value={isStock ? performance?.yearlyChange : undefined} /></TableCell>
-                                                            <TableCell><ChangeCell value={isStock ? performance?.fiveYearlyChange : undefined} /></TableCell>
-                                                        </>
-                                                    )}
+                                                    <TableCell><ChangeCell value={isStock ? perf?.weeklyChange : undefined} /></TableCell>
+                                                    <TableCell><ChangeCell value={isStock ? perf?.monthlyChange : undefined} /></TableCell>
+                                                    <TableCell><ChangeCell value={isStock ? perf?.yearlyChange : undefined} /></TableCell>
+                                                    <TableCell><ChangeCell value={isStock ? perf?.fiveYearlyChange : undefined} /></TableCell>
                                                     
                                                     <TableCell>
-                                                        <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={advice[inv.id]?.isPending}>
-                                                            {advice[inv.id]?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
+                                                        <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={adviceState?.isPending}>
+                                                            {adviceState?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
                                                             {adviceState?.output ? 'Refresh' : 'Get Advice'}
                                                         </Button>
                                                     </TableCell>
