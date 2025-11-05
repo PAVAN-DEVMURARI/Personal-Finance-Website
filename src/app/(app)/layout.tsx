@@ -29,6 +29,7 @@ import { UserNav } from '@/components/user-nav';
 import { FinpowerLogo } from '@/components/finpower-logo';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { FirebaseClientProvider, useUser } from '@/firebase';
+import React, { useEffect } from 'react';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -44,13 +45,14 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { user, isUserLoading } = useUser();
 
-  if (isUserLoading) {
-    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
-  }
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
 
-  if (!user) {
-    router.push('/login');
-    return null;
+  if (isUserLoading || !user) {
+    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
   }
 
   const sidebarNav = (
@@ -113,7 +115,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
                 <SheetHeader className="p-4 border-b">
-                    <SheetTitle>Menu</SheetTitle>
+                    <SheetTitle>
+                      <VisuallyHidden>Menu</VisuallyHidden>
+                    </SheetTitle>
                     <VisuallyHidden>
                         <SheetDescription>
                         Main navigation menu for the FinPower application.
