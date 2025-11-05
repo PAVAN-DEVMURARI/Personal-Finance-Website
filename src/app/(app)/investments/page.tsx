@@ -1,9 +1,8 @@
 'use client';
 
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X, Check, ChevronsUpDown } from 'lucide-react';
-import { z } from 'zod';
+import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
 import { getPortfolioPerformance, type PortfolioPerformanceOutput } from '@/ai/flows/get-portfolio-performance';
-import { symbolSearch } from '@/ai/flows/symbol-search';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -20,19 +18,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import debounce from 'lodash.debounce';
-
-const SymbolSchema = z.object({
-    symbol: z.string(),
-    instrument_name: z.string(),
-    exchange: z.string(),
-    country: z.string(),
-    type: z.string(),
-});
-type SymbolSearchOutput = z.infer<typeof SymbolSchema>[];
-
 
 type AdviceState = {
     [key: string]: {
@@ -78,31 +63,7 @@ const ChangeCell = ({ value }: { value?: number }) => {
 
 
 function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: boolean, onOpenChange: (open: boolean) => void, user: any, firestore: any }) {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<SymbolSearchOutput>([]);
-    const [isSearching, setIsSearching] = useState(false);
-    const [selectedSymbol, setSelectedSymbol] = useState('');
     const [selectedType, setSelectedType] = useState('Stocks');
-    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
-
-    const debouncedSearch = useCallback(
-        debounce((query: string, type: string) => {
-            if (query.length < 2) {
-                setSearchResults([]);
-                return;
-            }
-            setIsSearching(true);
-            symbolSearch({ query, instrument_type: type })
-                .then(results => setSearchResults(results))
-                .finally(() => setIsSearching(false));
-        }, 300),
-        []
-    );
-
-    useEffect(() => {
-        debouncedSearch(searchQuery, selectedType);
-    }, [searchQuery, selectedType, debouncedSearch]);
-
 
     const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -110,7 +71,7 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
 
         const formData = new FormData(event.currentTarget);
         const newInvestment = {
-            name: selectedSymbol || (formData.get('name') as string),
+            name: formData.get('name') as string,
             type: selectedType,
             purchasePrice: Number(formData.get('purchasePrice')),
             purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
@@ -121,23 +82,11 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
         const colRef = collection(firestore, 'users', user.uid, 'investments');
         addDocumentNonBlocking(colRef, newInvestment);
         onOpenChange(false);
-        // Reset form state
-        setSearchQuery('');
-        setSelectedSymbol('');
-        setSearchResults([]);
         setSelectedType('Stocks');
     };
     
     return (
-         <Dialog open={open} onOpenChange={(isOpen) => {
-            if (!isOpen) {
-                setSearchQuery('');
-                setSelectedSymbol('');
-                setSearchResults([]);
-                setSelectedType('Stocks');
-            }
-            onOpenChange(isOpen);
-         }}>
+         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
                  <Button>
                     <PlusCircle className="mr-2 h-4 w-4" />
@@ -161,52 +110,7 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
                     </div>
                     <div>
                         <Label htmlFor="name">Name / Ticker</Label>
-                        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
-                             <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    className={cn("w-full justify-between", !selectedSymbol && "text-muted-foreground")}
-                                >
-                                    {selectedSymbol || "Select symbol..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                <Command>
-                                    <CommandInput 
-                                        placeholder="Search for a symbol..." 
-                                        value={searchQuery}
-                                        onValueChange={setSearchQuery}
-                                    />
-                                    {isSearching && <div className="p-4 text-sm text-center">Searching...</div>}
-                                    <CommandList>
-                                        <CommandEmpty>{!isSearching && searchQuery.length > 1 ? 'No symbols found.' : 'Type to search.'}</CommandEmpty>
-                                        <CommandGroup>
-                                            {searchResults.map((result) => (
-                                                <CommandItem
-                                                    key={`${result.symbol}-${result.exchange}`}
-                                                    value={result.symbol}
-                                                    onSelect={(currentValue) => {
-                                                        setSelectedSymbol(currentValue.toUpperCase());
-                                                        setSearchQuery('');
-                                                        setSearchResults([]);
-                                                        setIsPopoverOpen(false);
-                                                    }}
-                                                >
-                                                    <Check className={cn("mr-2 h-4 w-4", selectedSymbol === result.symbol ? "opacity-100" : "opacity-0")} />
-                                                    <div className="flex flex-col">
-                                                        <span className="font-bold">{result.symbol}</span>
-                                                        <span className="text-xs text-muted-foreground">{result.instrument_name}</span>
-                                                    </div>
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                         <Input id="name" name="name" type="hidden" value={selectedSymbol} />
+                        <Input id="name" name="name" required />
                     </div>
                     <div><Label htmlFor="purchasePrice">Purchase Price (per unit)</Label><Input id="purchasePrice" name="purchasePrice" type="number" step="any" required /></div>
                     <div><Label htmlFor="purchaseDate">Purchase Date</Label><Input id="purchaseDate" name="purchaseDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} /></div>

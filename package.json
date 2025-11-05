@@ -47,7 +47,6 @@
     "genkit": "^1.20.0",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
-    "lodash.debounce": "^4.0.8",
     "lucide-react": "^0.475.0",
     "next": "15.3.3",
     "node-fetch": "^2.7.0",
@@ -62,7 +61,6 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@types/lodash.debounce": "^4.0.9",
     "@types/node": "^20",
     "@types/node-fetch": "^2.6.11",
     "@types/react": "^18",
