@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
-import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X } from 'lucide-react';
+import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X, Check, ChevronsUpDown } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
 import { getPortfolioPerformance, type PortfolioPerformanceOutput } from '@/ai/flows/get-portfolio-performance';
+import { symbolSearch, type SymbolSearchOutput } from '@/ai/flows/symbol-search';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,6 +19,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import debounce from 'lodash.debounce';
+
 
 type AdviceState = {
     [key: string]: {
@@ -60,6 +65,145 @@ const ChangeCell = ({ value }: { value?: number }) => {
         </span>
     );
 };
+
+
+function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: boolean, onOpenChange: (open: boolean) => void, user: any, firestore: any }) {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SymbolSearchOutput>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [selectedSymbol, setSelectedSymbol] = useState('');
+    const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+
+    const debouncedSearch = useCallback(
+        debounce((query: string) => {
+            if (query.length < 2) {
+                setSearchResults([]);
+                return;
+            }
+            setIsSearching(true);
+            symbolSearch({ query })
+                .then(results => setSearchResults(results))
+                .finally(() => setIsSearching(false));
+        }, 300),
+        []
+    );
+
+    useEffect(() => {
+        debouncedSearch(searchQuery);
+    }, [searchQuery, debouncedSearch]);
+
+
+    const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        if (!firestore || !user?.uid) return;
+
+        const formData = new FormData(event.currentTarget);
+        const newInvestment = {
+            name: selectedSymbol || (formData.get('name') as string),
+            type: (formData.get('type') as string) || 'Stocks',
+            purchasePrice: Number(formData.get('purchasePrice')),
+            purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
+            userProfileId: user.uid,
+            createdAt: serverTimestamp(),
+        };
+
+        const colRef = collection(firestore, 'users', user.uid, 'investments');
+        addDocumentNonBlocking(colRef, newInvestment);
+        onOpenChange(false);
+        // Reset form state
+        setSearchQuery('');
+        setSelectedSymbol('');
+        setSearchResults([]);
+    };
+    
+    return (
+         <Dialog open={open} onOpenChange={(isOpen) => {
+            if (!isOpen) {
+                setSearchQuery('');
+                setSelectedSymbol('');
+                setSearchResults([]);
+            }
+            onOpenChange(isOpen);
+         }}>
+            <DialogTrigger asChild>
+                 <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Investment
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader><DialogTitle>Add New Investment</DialogTitle></DialogHeader>
+                <form onSubmit={handleAddInvestment} className="space-y-4">
+                    <div>
+                        <Label htmlFor="name">Name / Ticker</Label>
+                        <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
+                             <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    className={cn("w-full justify-between", !selectedSymbol && "text-muted-foreground")}
+                                >
+                                    {selectedSymbol || "Select symbol..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command>
+                                    <CommandInput 
+                                        placeholder="Search for a stock..." 
+                                        value={searchQuery}
+                                        onValueChange={setSearchQuery}
+                                    />
+                                    {isSearching && <div className="p-4 text-sm text-center">Searching...</div>}
+                                    <CommandEmpty>{!isSearching && searchQuery.length > 1 ? 'No symbols found.' : 'Type to search.'}</CommandEmpty>
+                                    <CommandList>
+                                        <CommandGroup>
+                                            {searchResults.map((result) => (
+                                                <CommandItem
+                                                    key={result.symbol}
+                                                    value={result.symbol}
+                                                    onSelect={(currentValue) => {
+                                                        setSelectedSymbol(currentValue.toUpperCase());
+                                                        setSearchQuery('');
+                                                        setSearchResults([]);
+                                                        setIsPopoverOpen(false);
+                                                    }}
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", selectedSymbol === result.symbol ? "opacity-100" : "opacity-0")} />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold">{result.symbol}</span>
+                                                        <span className="text-xs text-muted-foreground">{result.instrument_name}</span>
+                                                    </div>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                         <Input id="name" name="name" type="hidden" value={selectedSymbol} />
+                    </div>
+                    <div>
+                        <Label htmlFor="type">Type</Label>
+                         <Select name="type" defaultValue="Stocks">
+                            <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="Stocks">Stocks</SelectItem>
+                                <SelectItem value="Crypto">Crypto</SelectItem>
+                                <SelectItem value="Mutual Funds">Mutual Funds</SelectItem>
+                                <SelectItem value="ETFs">ETFs</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div><Label htmlFor="purchasePrice">Purchase Price (per unit)</Label><Input id="purchasePrice" name="purchasePrice" type="number" step="any" required /></div>
+                    <div><Label htmlFor="purchaseDate">Purchase Date</Label><Input id="purchaseDate" name="purchaseDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} /></div>
+                    <Button type="submit" className="w-full">Add Investment</Button>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 
 export default function InvestmentsPage() {
     const { firestore, user } = useFirebase();
@@ -114,25 +258,6 @@ export default function InvestmentsPage() {
         });
     };
 
-    const handleAddInvestment = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!firestore || !user?.uid) return;
-
-        const formData = new FormData(event.currentTarget);
-        const newInvestment = {
-            name: formData.get('name') as string,
-            type: (formData.get('type') as string) || 'Stocks',
-            purchasePrice: Number(formData.get('purchasePrice')),
-            purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
-            userProfileId: user.uid,
-            createdAt: serverTimestamp(),
-        };
-
-        const colRef = collection(firestore, 'users', user.uid, 'investments');
-        addDocumentNonBlocking(colRef, newInvestment);
-        setAddDialogOpen(false);
-    };
-
     const handleDeleteInvestment = (id: string) => {
         if(!firestore || !user?.uid) return;
         const docRef = doc(firestore, 'users', user.uid, 'investments', id);
@@ -151,35 +276,7 @@ export default function InvestmentsPage() {
             <PageHeader
                 title="Investments"
                 action={
-                    <Dialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen}>
-                        <DialogTrigger asChild>
-                             <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Add Investment
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader><DialogTitle>Add New Investment</DialogTitle></DialogHeader>
-                            <form onSubmit={handleAddInvestment} className="space-y-4">
-                                <div><Label htmlFor="name">Name / Ticker</Label><Input id="name" name="name" required /></div>
-                                <div>
-                                    <Label htmlFor="type">Type</Label>
-                                     <Select name="type" defaultValue="Stocks">
-                                        <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Stocks">Stocks</SelectItem>
-                                            <SelectItem value="Crypto">Crypto</SelectItem>
-                                            <SelectItem value="Mutual Funds">Mutual Funds</SelectItem>
-                                            <SelectItem value="ETFs">ETFs</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div><Label htmlFor="purchasePrice">Purchase Price (per unit)</Label><Input id="purchasePrice" name="purchasePrice" type="number" step="any" required /></div>
-                                <div><Label htmlFor="purchaseDate">Purchase Date</Label><Input id="purchaseDate" name="purchaseDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} /></div>
-                                <Button type="submit" className="w-full">Add Investment</Button>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
+                    <AddInvestmentDialog open={isAddDialogOpen} onOpenChange={setAddDialogOpen} user={user} firestore={firestore} />
                 }
             />
 
