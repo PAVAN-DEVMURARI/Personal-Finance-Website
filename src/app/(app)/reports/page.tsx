@@ -56,41 +56,43 @@ export default function ReportsPage() {
 
     const handleExportPDF = () => {
         if (!expenses || !income) return;
-
+    
         const doc = new jsPDF();
-        
+        let cursorY = 45;
+    
         doc.setFontSize(20);
         doc.text("Financial Report", 14, 22);
         doc.setFontSize(12);
         doc.text(`Report for: ${user?.email || 'N/A'}`, 14, 30);
         doc.text(`Date: ${format(new Date(), 'MMMM d, yyyy')}`, 14, 36);
-
+    
         if (income.length > 0) {
+            doc.setFontSize(16);
+            doc.text('Income', 14, cursorY);
+            cursorY += 2; 
+
             autoTable(doc, {
-                startY: 45,
+                startY: cursorY,
                 head: [['Date', 'Source', 'Amount']],
                 body: income.map(i => [format(new Date(i.date), 'yyyy-MM-dd'), i.source, i.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })]),
                 headStyles: { fillColor: [41, 128, 185] },
-                didDrawPage: (data) => {
-                    doc.setFontSize(16);
-                    doc.text('Income', 14, data.cursor.y - 10);
-                }
             });
+            cursorY = (doc as any).lastAutoTable.finalY + 15;
         }
-
+    
         if (expenses.length > 0) {
+            doc.setFontSize(16);
+            doc.text('Expenses', 14, cursorY);
+            cursorY += 2;
+
             autoTable(doc, {
-                startY: (doc as any).lastAutoTable.finalY + 15,
+                startY: cursorY,
                 head: [['Date', 'Description', 'Category', 'Amount']],
                 body: expenses.map(e => [format(new Date(e.date), 'yyyy-MM-dd'), e.description, e.category, e.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })]),
                 headStyles: { fillColor: [231, 76, 60] },
-                didDrawPage: (data) => {
-                    doc.setFontSize(16);
-                    doc.text('Expenses', 14, data.cursor.y - 10);
-                }
             });
         }
-
+    
         doc.save(`financial-report-${new Date().toISOString().split('T')[0]}.pdf`);
     };
 
