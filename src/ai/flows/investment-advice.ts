@@ -68,7 +68,7 @@ export async function generateInvestmentAdvice(input: InvestmentAdviceInput): Pr
 const prompt = ai.definePrompt({
   name: 'investmentAdvicePrompt',
   input: { schema: z.object({ assetName: z.string(), purchasePrice: z.number(), currentPrice: z.number() }) },
-  output: { schema: Omit<InvestmentAdviceOutput, 'currentPrice'> },
+  output: { schema: InvestmentAdviceOutputSchema.omit({ currentPrice: true }) },
   tools: [getStockPriceTool],
   prompt: `You are an expert financial analyst. Your task is to provide investment advice on a specific asset.
 
