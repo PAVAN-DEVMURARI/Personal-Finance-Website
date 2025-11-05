@@ -19,10 +19,14 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { UserNav } from '@/components/user-nav';
 import { FinpowerLogo } from '@/components/finpower-logo';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -95,6 +99,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
+                <SheetHeader className="h-0">
+                  <VisuallyHidden>
+                    <SheetTitle>Menu</SheetTitle>
+                    <SheetDescription>
+                      Main navigation menu for the FinPower application.
+                    </SheetDescription>
+                  </VisuallyHidden>
+                </SheetHeader>
                 <div className="flex h-[60px] items-center border-b px-6">
                     <Link href="/" className="flex items-center gap-2 font-semibold">
                         <FinpowerLogo className="h-6 w-6" />
