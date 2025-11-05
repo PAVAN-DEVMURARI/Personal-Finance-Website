@@ -169,7 +169,7 @@ function AddInvestmentDialog({ open, onOpenChange, user, firestore }: { open: bo
                                         <CommandGroup>
                                             {searchResults.map((result) => (
                                                 <CommandItem
-                                                    key={result.symbol}
+                                                    key={`${result.symbol}-${result.exchange}`}
                                                     value={result.symbol}
                                                     onSelect={(currentValue) => {
                                                         setSelectedSymbol(currentValue.toUpperCase());
