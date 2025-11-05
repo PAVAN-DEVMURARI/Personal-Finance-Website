@@ -11,14 +11,42 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
+// This is a placeholder. In a real app, you would fetch this from a financial API.
+const getStockPriceTool = ai.defineTool(
+    {
+      name: 'getStockPrice',
+      description: 'Gets the current price of a stock.',
+      inputSchema: z.object({ ticker: z.string().describe('The stock ticker symbol.') }),
+      outputSchema: z.object({ price: z.number() }),
+    },
+    async ({ ticker }) => {
+        // IMPORTANT: Replace this with a real financial data API call.
+        // You will need an API key from a provider like Alpha Vantage, Finnhub, etc.
+        // Example with Alpha Vantage (you would need to install 'node-fetch'):
+        // const apiKey = process.env.ALPHA_VANTAGE_API_KEY;
+        // const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${apiKey}`;
+        // const response = await fetch(url);
+        // const data = await response.json();
+        // const price = parseFloat(data['Global Quote']['05. price']);
+        // return { price };
+
+        console.log(`Fetching mock price for ${ticker}`);
+        // Returning a random mock price for demonstration purposes.
+        return { price: Math.random() * 1000 + 100 };
+    }
+);
+
+
 const InvestmentAdviceInputSchema = z.object({
   assetName: z.string().describe('The name of the investment asset (e.g., Bitcoin, Gold, Nifty 50 ETF).'),
+  purchasePrice: z.number().describe('The price at which the asset was purchased.'),
 });
 export type InvestmentAdviceInput = z.infer<typeof InvestmentAdviceInputSchema>;
 
 const InvestmentAdviceOutputSchema = z.object({
   signal: z.enum(['BUY', 'SELL', 'HOLD']).describe("The investment signal: 'BUY', 'SELL', or 'HOLD'."),
   advice: z.string().describe('Detailed analysis and reasoning for the signal.'),
+  currentPrice: z.number().describe('The current market price of the asset.'),
   disclaimer: z.string().describe('A standard disclaimer that this is not financial advice.'),
 });
 export type InvestmentAdviceOutput = z.infer<typeof InvestmentAdviceOutputSchema>;
@@ -29,11 +57,14 @@ export async function generateInvestmentAdvice(input: InvestmentAdviceInput): Pr
 
 const prompt = ai.definePrompt({
   name: 'investmentAdvicePrompt',
-  input: { schema: InvestmentAdviceInputSchema },
+  input: { schema: z.object({ assetName: z.string(), purchasePrice: z.number(), currentPrice: z.number() }) },
   output: { schema: InvestmentAdviceOutputSchema },
+  tools: [getStockPriceTool],
   prompt: `You are an expert financial analyst. Your task is to provide investment advice on a specific asset.
 
 Asset: {{{assetName}}}
+Purchase Price: {{{purchasePrice}}}
+Current Market Price: {{{currentPrice}}}
 
 Analyze the current market conditions for this asset. Based on your analysis, determine whether it's a good time to buy, sell, or hold.
 - If it's a buying opportunity, set the signal to 'BUY'.
@@ -41,6 +72,7 @@ Analyze the current market conditions for this asset. Based on your analysis, de
 - Otherwise, set the signal to 'HOLD'.
 
 Provide a concise, one-paragraph explanation for your recommendation in the 'advice' field.
+Provide the current market price in the 'currentPrice' field.
 
 Finally, set the 'disclaimer' to: "This is AI-generated analysis and not financial advice. Always do your own research and consult with a qualified financial advisor before making investment decisions."`,
 });
@@ -52,7 +84,24 @@ const investmentAdviceFlow = ai.defineFlow(
     outputSchema: InvestmentAdviceOutputSchema,
   },
   async (input) => {
-    const { output } = await prompt(input);
+    
+    // For non-stocks, we can't get a price, so we'll just use a mock response.
+    // A real implementation would have different tools for different asset types.
+    const nonStockTypes = ['crypto', 'mutual funds', 'etfs'];
+    const isStock = !nonStockTypes.some(type => input.assetName.toLowerCase().includes(type));
+
+    let currentPrice = input.purchasePrice; // Default to purchase price
+
+    if (isStock) {
+        const stockPrice = await getStockPriceTool({ ticker: input.assetName });
+        currentPrice = stockPrice.price;
+    }
+
+    const { output } = await prompt({
+        assetName: input.assetName,
+        purchasePrice: input.purchasePrice,
+        currentPrice: currentPrice,
+    });
     return output!;
   }
 );
