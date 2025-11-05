@@ -4,10 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   FileText,
-  Home,
   Landmark,
   LayoutDashboard,
-  LogOut,
   PanelLeft,
   Settings,
   Target,
@@ -42,18 +40,7 @@ const navItems = [
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, isUserLoading } = useUser();
-
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
-
-  if (isUserLoading || !user) {
-    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
-  }
+  const { isUserLoading } = useUser();
 
   const sidebarNav = (
     <nav className="grid items-start gap-2 px-4 text-sm font-medium">
@@ -74,6 +61,10 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
       ))}
     </nav>
   );
+
+  if (isUserLoading) {
+    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
+  }
 
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
@@ -164,6 +155,19 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login');
+    }
+  }, [user, isUserLoading, router]);
+
+  if (isUserLoading || !user) {
+    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
+  }
+  
   return (
     <FirebaseClientProvider>
       <AppLayoutContent>{children}</AppLayoutContent>
