@@ -137,8 +137,8 @@ const getPortfolioPerformanceFlow = ai.defineFlow(
 
         const promises = tickers.map(ticker => 
             getAssetPerformanceTool({ ticker })
-                .then(performance => ({ ticker, status: 'fulfilled', value: performance }))
-                .catch(error => ({ ticker, status: 'rejected', reason: error }))
+                .then(performance => ({ ticker, status: 'fulfilled' as const, value: performance }))
+                .catch(error => ({ ticker, status: 'rejected' as const, reason: error }))
         );
 
         const outcomes = await Promise.allSettled(promises);
@@ -149,16 +149,12 @@ const getPortfolioPerformanceFlow = ai.defineFlow(
                 if (status === 'fulfilled') {
                     results[ticker] = value;
                 } else {
-                    // This case is where the tool's internal catch resolves.
                     console.warn(`The tool internally handled an error for ${ticker}:`, reason);
-                    // Even if the tool handles it, you might want to return a specific state
-                    // or just let the mock data (if returned) be the result.
-                    if (value) { // If mock data was returned
+                    if (value) { 
                         results[ticker] = value;
                     }
                 }
             } else {
-                // This would be an unexpected error in the Promise.allSettled itself
                 console.error("An unexpected error occurred in getPortfolioPerformanceFlow:", outcome.reason);
             }
         });
