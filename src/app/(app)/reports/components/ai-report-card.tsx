@@ -38,9 +38,9 @@ export function AiReportCard() {
         return {
             income: income.reduce((sum, t) => sum + t.amount, 0),
             expenses: expenses.reduce((sum, t) => sum + t.amount, 0),
-            investments: investments.reduce((sum, i) => sum + (i.quantity * i.purchasePrice), 0),
+            investments: investments.reduce((sum, i) => sum + i.purchasePrice, 0),
             spendingByCategory: expenses.reduce((acc, t) => ({...acc, [t.category]: (acc[t.category] || 0) + t.amount }), {} as Record<string, number>),
-            investmentPortfolio: investments.reduce((acc, i) => ({...acc, [i.type]: (acc[i.type] || 0) + (i.quantity * i.purchasePrice) }), {} as Record<string, number>),
+            investmentPortfolio: investments.reduce((acc, i) => ({...acc, [i.type]: (acc[i.type] || 0) + i.purchasePrice }), {} as Record<string, number>),
         }
     }, [expenses, income, investments]);
 

@@ -200,10 +200,6 @@
           "type": "string",
           "description": "The name or ticker symbol of the investment."
         },
-        "quantity": {
-          "type": "number",
-          "description": "The number of shares or units owned."
-        },
         "purchasePrice": {
           "type": "number",
           "description": "The price at which the investment was purchased."
@@ -219,7 +215,6 @@
         "userProfileId",
         "type",
         "name",
-        "quantity",
         "purchasePrice",
         "purchaseDate"
       ]

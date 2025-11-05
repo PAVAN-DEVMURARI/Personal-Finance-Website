@@ -65,7 +65,7 @@ export default function InvestmentsPage() {
 
     const totalInvestments = useMemo(() => {
         if (!investments) return 0;
-        return investments.reduce((acc, inv) => acc + (inv.quantity * inv.purchasePrice), 0);
+        return investments.reduce((acc, inv) => acc + inv.purchasePrice, 0);
     }, [investments]);
 
     const handleGetAdvice = (investmentId: string, assetName: string) => {
@@ -87,7 +87,7 @@ export default function InvestmentsPage() {
         const newInvestment = {
             name: formData.get('name') as string,
             type: formData.get('type') as string,
-            quantity: Number(formData.get('quantity')),
+            quantity: 1, // Defaulting quantity to 1 as it's removed from form
             purchasePrice: Number(formData.get('purchasePrice')),
             purchaseDate: new Date(formData.get('purchaseDate') as string).toISOString(),
             userProfileId: user.uid,
@@ -134,7 +134,6 @@ export default function InvestmentsPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div><Label htmlFor="quantity">Quantity</Label><Input id="quantity" name="quantity" type="number" step="any" required /></div>
                                 <div><Label htmlFor="purchasePrice">Purchase Price</Label><Input id="purchasePrice" name="purchasePrice" type="number" step="any" required /></div>
                                 <div><Label htmlFor="purchaseDate">Purchase Date</Label><Input id="purchaseDate" name="purchaseDate" type="date" required /></div>
                                 <Button type="submit" className="w-full">Add Investment</Button>
@@ -189,7 +188,7 @@ export default function InvestmentsPage() {
                                         ) : investments && investments.length > 0 ? (
                                             investments.map((inv) => {
                                                 const change = getMockChange(inv.monthlyChange || 0, timePeriod);
-                                                const value = inv.quantity * inv.purchasePrice;
+                                                const value = inv.purchasePrice;
                                                 return (
                                                     <TableRow key={inv.id}>
                                                         <TableCell className="font-medium">{inv.name}</TableCell>

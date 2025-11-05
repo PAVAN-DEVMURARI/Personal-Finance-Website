@@ -55,7 +55,7 @@ export function FinancialTipCard() {
       
       const totalSavings = goals.reduce((sum, goal) => sum + goal.savedAmount, 0);
       
-      const totalInvestmentValue = investments.reduce((sum, inv) => sum + (inv.quantity * inv.purchasePrice), 0); // Simplified
+      const totalInvestmentValue = investments.reduce((sum, inv) => sum + inv.purchasePrice, 0); // Simplified
       const overallInvestmentPerformance = investments.reduce((sum, inv) => sum + (inv.monthlyChange || 0), 0) / (investments.length || 1);
 
       const financialGoals = goals.map(g => g.name).join(', ');
