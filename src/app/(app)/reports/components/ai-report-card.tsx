@@ -1,29 +1,53 @@
 'use client';
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
+import { collection } from 'firebase/firestore';
 import { BrainCircuit, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle , CardFooter } from "@/components/ui/card";
 import { generateMonthlyReport, type MonthlyReportInput, type MonthlyReportOutput } from "@/ai/flows/monthly-ai-financial-report";
-import { transactions, investments } from "@/lib/data";
 import { Separator } from "@/components/ui/separator";
-
-const mockReportInput: MonthlyReportInput = {
-    income: transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0),
-    expenses: transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0),
-    investments: investments.reduce((sum, i) => sum + i.value, 0),
-    spendingByCategory: transactions.filter(t => t.type === 'expense').reduce((acc, t) => ({...acc, [t.category]: (acc[t.category] || 0) + t.amount }), {} as Record<string, number>),
-    investmentPortfolio: investments.reduce((acc, i) => ({...acc, [i.type]: (acc[i.type] || 0) + i.value }), {} as Record<string, number>),
-};
-
+import { useCollection, useFirebase } from "@/firebase";
 
 export function AiReportCard() {
     const [isPending, startTransition] = useTransition();
     const [report, setReport] = useState<MonthlyReportOutput | null>(null);
+    const { firestore, user } = useFirebase();
+
+    const expensesQuery = useMemo(() => {
+        if (!firestore || !user?.uid) return null;
+        return collection(firestore, 'users', user.uid, 'expenses');
+    }, [firestore, user?.uid]);
+
+    const incomeQuery = useMemo(() => {
+        if (!firestore || !user?.uid) return null;
+        return collection(firestore, 'users', user.uid, 'income');
+    }, [firestore, user?.uid]);
+
+    const investmentsQuery = useMemo(() => {
+        if (!firestore || !user?.uid) return null;
+        return collection(firestore, 'users', user.uid, 'investments');
+    }, [firestore, user?.uid]);
+
+    const { data: expenses } = useCollection(expensesQuery as any);
+    const { data: income } = useCollection(incomeQuery as any);
+    const { data: investments } = useCollection(investmentsQuery as any);
+
+    const reportInput: MonthlyReportInput | null = useMemo(() => {
+        if (!expenses || !income || !investments) return null;
+        return {
+            income: income.reduce((sum, t) => sum + t.amount, 0),
+            expenses: expenses.reduce((sum, t) => sum + t.amount, 0),
+            investments: investments.reduce((sum, i) => sum + (i.quantity * i.purchasePrice), 0),
+            spendingByCategory: expenses.reduce((acc, t) => ({...acc, [t.category]: (acc[t.category] || 0) + t.amount }), {} as Record<string, number>),
+            investmentPortfolio: investments.reduce((acc, i) => ({...acc, [i.type]: (acc[i.type] || 0) + (i.quantity * i.purchasePrice) }), {} as Record<string, number>),
+        }
+    }, [expenses, income, investments]);
 
     const handleGenerateReport = () => {
+        if (!reportInput) return;
         startTransition(async () => {
-            const result = await generateMonthlyReport(mockReportInput);
+            const result = await generateMonthlyReport(reportInput);
             setReport(result);
         });
     };
@@ -57,7 +81,7 @@ export function AiReportCard() {
                 )}
             </CardContent>
             <CardFooter>
-                 <Button onClick={handleGenerateReport} disabled={isPending} className="w-full">
+                 <Button onClick={handleGenerateReport} disabled={isPending || !reportInput} className="w-full">
                     {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {report ? "Regenerate Report" : "Generate Report"}
                 </Button>

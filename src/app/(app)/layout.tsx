@@ -1,12 +1,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   FileText,
   Home,
   Landmark,
   LayoutDashboard,
+  LogOut,
   PanelLeft,
   Settings,
   Target,
@@ -27,6 +28,7 @@ import {
 import { UserNav } from '@/components/user-nav';
 import { FinpowerLogo } from '@/components/finpower-logo';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { FirebaseClientProvider, useUser } from '@/firebase';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -37,8 +39,19 @@ const navItems = [
   { href: '/reports', icon: FileText, label: 'Reports' },
 ];
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, isUserLoading } = useUser();
+
+  if (isUserLoading) {
+    return <div className="flex h-screen w-screen items-center justify-center">Loading...</div>;
+  }
+
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
 
   const sidebarNav = (
     <nav className="grid items-start gap-2 px-4 text-sm font-medium">
@@ -99,13 +112,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col p-0">
-                <SheetHeader className="h-0">
-                  <VisuallyHidden>
+                <SheetHeader className="p-4 border-b">
                     <SheetTitle>Menu</SheetTitle>
-                    <SheetDescription>
-                      Main navigation menu for the FinPower application.
-                    </SheetDescription>
-                  </VisuallyHidden>
+                    <VisuallyHidden>
+                        <SheetDescription>
+                        Main navigation menu for the FinPower application.
+                        </SheetDescription>
+                    </VisuallyHidden>
                 </SheetHeader>
                 <div className="flex h-[60px] items-center border-b px-6">
                     <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -143,4 +156,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
     </div>
   );
+}
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <FirebaseClientProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </FirebaseClientProvider>
+  )
 }
