@@ -3,8 +3,6 @@
  * @fileOverview A flow for searching stock symbols.
  *
  * - symbolSearch - A function that searches for stock symbols.
- * - SymbolSearchInput - The input type for the function.
- * - SymbolSearchOutput - The return type for the function.
  */
 
 import { ai } from '@/ai/genkit';
@@ -18,15 +16,13 @@ const SymbolSchema = z.object({
     country: z.string(),
 });
 
-export const SymbolSearchInputSchema = z.object({
+const SymbolSearchInputSchema = z.object({
   query: z.string().describe('The search query for the stock symbol.'),
 });
-export type SymbolSearchInput = z.infer<typeof SymbolSearchInputSchema>;
 
-export const SymbolSearchOutputSchema = z.array(SymbolSchema);
-export type SymbolSearchOutput = z.infer<typeof SymbolSearchOutputSchema>;
+const SymbolSearchOutputSchema = z.array(SymbolSchema);
 
-export async function symbolSearch(input: SymbolSearchInput): Promise<SymbolSearchOutput> {
+export async function symbolSearch(input: z.infer<typeof SymbolSearchInputSchema>): Promise<z.infer<typeof SymbolSearchOutputSchema>> {
   return symbolSearchFlow(input);
 }
 

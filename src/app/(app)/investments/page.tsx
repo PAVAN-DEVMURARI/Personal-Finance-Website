@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { collection, doc, serverTimestamp } from 'firebase/firestore';
 import { PlusCircle, TrendingUp, TrendingDown, BrainCircuit, Loader2, Lightbulb, AlertTriangle, ShieldCheck, X, Check, ChevronsUpDown } from 'lucide-react';
+import { z } from 'zod';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { generateInvestmentAdvice, type InvestmentAdviceOutput } from '@/ai/flows/investment-advice';
 import { getPortfolioPerformance, type PortfolioPerformanceOutput } from '@/ai/flows/get-portfolio-performance';
-import { symbolSearch, type SymbolSearchOutput } from '@/ai/flows/symbol-search';
+import { symbolSearch } from '@/ai/flows/symbol-search';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCollection, useFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -22,6 +23,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import debounce from 'lodash.debounce';
+
+const SymbolSchema = z.object({
+    symbol: z.string(),
+    instrument_name: z.string(),
+    exchange: z.string(),
+    country: z.string(),
+});
+type SymbolSearchOutput = z.infer<typeof SymbolSchema>[];
 
 
 type AdviceState = {
