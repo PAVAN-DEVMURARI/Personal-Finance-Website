@@ -17,6 +17,7 @@ const fontHeadline = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'FinPower - Your Financial Companion',
   description: 'Track expenses, manage income, and achieve your savings goals with FinPower.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -26,6 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <meta name="theme-color" content="#17c3b2" />
+      </head>
       <body className={cn('font-body antialiased', fontBody.variable, fontHeadline.variable)}>
         {children}
         <Toaster />
