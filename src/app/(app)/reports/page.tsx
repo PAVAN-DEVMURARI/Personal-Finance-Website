@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Download } from 'lucide-react';
@@ -7,8 +8,7 @@ import { collection } from 'firebase/firestore';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { AiReportCard } from './components/ai-report-card';
-import { IncomeExpenseSummary } from './components/income-expense-summary';
-import { InvestmentSummary } from './components/investment-summary';
+import { FinancialSummaryChart } from './components/financial-summary-chart';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
@@ -159,10 +159,7 @@ export default function ReportsPage() {
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <div className="lg:col-span-2">
-                    <IncomeExpenseSummary />
-                </div>
-                 <div className="lg:col-span-2">
-                    <InvestmentSummary />
+                    <FinancialSummaryChart />
                 </div>
                 <div className="lg:col-span-2">
                     <AiReportCard />
@@ -171,3 +168,4 @@ export default function ReportsPage() {
         </>
     );
 }
+
