@@ -177,8 +177,103 @@ export default function InvestmentsPage() {
             console.error("Error deleting investment: ", error);
         });
     }
+
+    const renderMobileView = () => (
+        <div className="md:hidden space-y-4">
+            {investments && investments.length > 0 ? (
+                investments.map((inv) => {
+                    const adviceState = advice[inv.id];
+                    return (
+                        <Card key={inv.id}>
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle className="text-lg">{inv.name}</CardTitle>
+                                        <Badge variant="outline" className="mt-1">{inv.type}</Badge>
+                                    </div>
+                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteInvestment(inv.id)}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div>
+                                    <p className="text-sm text-muted-foreground">Purchase Price</p>
+                                    <p className="text-lg font-bold">{inv.purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</p>
+                                </div>
+                                <Button variant="outline" size="sm" className="w-full" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={adviceState?.isPending}>
+                                    {adviceState?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
+                                    {adviceState?.output ? 'Refresh Advice' : 'Get AI Advice'}
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    );
+                })
+             ) : (
+                <Card>
+                    <CardContent className="pt-6">
+                        <p className="text-center text-muted-foreground">No investments yet.</p>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
     
-    const isDataLoading = isLoading;
+    const renderDesktopView = () => (
+         <Card className="hidden md:block">
+            <CardHeader>
+                <CardTitle>Your Portfolio</CardTitle>
+                <CardDescription>A list of your current investments.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Purchase Price</TableHead>
+                                <TableHead>AI Advice</TableHead>
+                                <TableHead className="w-[50px]"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {isLoading ? (
+                                [...Array(3)].map((_, i) => (
+                                    <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
+                                ))
+                            ) : investments && investments.length > 0 ? (
+                                investments.map((inv) => {
+                                    const adviceState = advice[inv.id];
+                                    return (
+                                        <TableRow key={inv.id}>
+                                            <TableCell className="font-medium">{inv.name}</TableCell>
+                                            <TableCell><Badge variant="outline">{inv.type}</Badge></TableCell>
+                                            <TableCell>{inv.purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
+                                            
+                                            <TableCell>
+                                                <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={adviceState?.isPending}>
+                                                    {adviceState?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
+                                                    {adviceState?.output ? 'Refresh' : 'Get Advice'}
+                                                </Button>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteInvestment(inv.id)}>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })
+                            ) : (
+                                <TableRow><TableCell colSpan={5} className="text-center">No investments yet.</TableCell></TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
+            </CardContent>
+        </Card>
+    );
 
     return (
         <>
@@ -201,60 +296,18 @@ export default function InvestmentsPage() {
                         <p className="text-sm text-muted-foreground">This is the total amount you have invested.</p>
                     </CardContent>
                 </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Your Portfolio</CardTitle>
-                        <CardDescription>A list of your current investments.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="overflow-x-auto">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Name</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>Purchase Price</TableHead>
-                                        <TableHead>AI Advice</TableHead>
-                                        <TableHead className="w-[50px]"></TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {isDataLoading ? (
-                                        [...Array(3)].map((_, i) => (
-                                            <TableRow key={i}><TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell></TableRow>
-                                        ))
-                                    ) : investments && investments.length > 0 ? (
-                                        investments.map((inv) => {
-                                            const adviceState = advice[inv.id];
+                
+                {isLoading && !investments ? (
+                    <div className="space-y-4">
+                        {[...Array(2)].map((_, i) => <Skeleton key={i} className="h-40 w-full" />)}
+                    </div>
+                ) : (
+                    <>
+                        {renderMobileView()}
+                        {renderDesktopView()}
+                    </>
+                )}
 
-                                            return (
-                                                <TableRow key={inv.id}>
-                                                    <TableCell className="font-medium">{inv.name}</TableCell>
-                                                    <TableCell><Badge variant="outline">{inv.type}</Badge></TableCell>
-                                                    <TableCell>{inv.purchasePrice.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}</TableCell>
-                                                    
-                                                    <TableCell>
-                                                        <Button variant="outline" size="sm" onClick={() => handleGetAdvice(inv.id, inv.name, inv.type, inv.purchasePrice)} disabled={adviceState?.isPending}>
-                                                            {adviceState?.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <BrainCircuit className="mr-2 h-4 w-4" />}
-                                                            {adviceState?.output ? 'Refresh' : 'Get Advice'}
-                                                        </Button>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteInvestment(inv.id)}>
-                                                            <X className="h-4 w-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            );
-                                        })
-                                    ) : (
-                                        <TableRow><TableCell colSpan={5} className="text-center">No investments yet.</TableCell></TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </CardContent>
-                </Card>
 
                 {investments && Object.entries(advice).map(([id, { output }]) => {
                     const investment = investments.find(inv => inv.id === id);

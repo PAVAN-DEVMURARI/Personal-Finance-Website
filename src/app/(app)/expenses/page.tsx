@@ -58,6 +58,93 @@ export default function ExpensesPage() {
         deleteDocumentNonBlocking(docRef);
     }
 
+    const renderMobileView = () => (
+        <div className="md:hidden space-y-4">
+            {expenses && expenses.length > 0 ? (
+                expenses.map((expense) => (
+                    <Card key={expense.id}>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-lg">{expense.description}</CardTitle>
+                                    <CardDescription>{format(new Date(expense.date), 'MMM d, yyyy')}</CardDescription>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex justify-between items-center">
+                             <Badge variant="outline">{expense.category}</Badge>
+                            <p className="text-lg font-bold">
+                                {expense.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                            </p>
+                        </CardContent>
+                    </Card>
+                ))
+            ) : (
+                <Card>
+                    <CardContent className="pt-6">
+                        <p className="text-center text-muted-foreground">No expenses recorded for this month.</p>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+
+    const renderDesktopView = () => (
+        <Card className="hidden md:block">
+            <CardHeader>
+                <CardTitle>This Month's Expenses</CardTitle>
+                <CardDescription>A list of your expenses for the current month.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading ? (
+                            [...Array(5)].map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : expenses && expenses.length > 0 ? (
+                            expenses.map((expense) => (
+                                <TableRow key={expense.id}>
+                                    <TableCell className="font-medium">{expense.description}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{expense.category}</Badge>
+                                    </TableCell>
+                                    <TableCell>{format(new Date(expense.date), 'MMM d, yyyy')}</TableCell>
+                                    <TableCell className="text-right">
+                                        {expense.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center">No expenses recorded for this month.</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
+
     return (
         <>
             <PageHeader
@@ -97,56 +184,17 @@ export default function ExpensesPage() {
                     </Dialog>
                 }
             />
-            <Card>
-                <CardHeader>
-                    <CardTitle>This Month's Expenses</CardTitle>
-                    <CardDescription>A list of your expenses for the current month.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Description</TableHead>
-                                <TableHead>Category</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                                <TableHead className="w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                [...Array(5)].map((_, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : expenses && expenses.length > 0 ? (
-                                expenses.map((expense) => (
-                                    <TableRow key={expense.id}>
-                                        <TableCell className="font-medium">{expense.description}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{expense.category}</Badge>
-                                        </TableCell>
-                                        <TableCell>{format(new Date(expense.date), 'MMM d, yyyy')}</TableCell>
-                                        <TableCell className="text-right">
-                                            {expense.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center">No expenses recorded for this month.</TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            
+            {isLoading && !expenses ? (
+                <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+                </div>
+            ) : (
+                <>
+                    {renderMobileView()}
+                    {renderDesktopView()}
+                </>
+            )}
         </>
     );
 }

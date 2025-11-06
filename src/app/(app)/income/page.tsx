@@ -57,6 +57,93 @@ export default function IncomePage() {
         const docRef = doc(firestore, 'users', user.uid, 'income', id);
         deleteDocumentNonBlocking(docRef);
     }
+    
+    const renderMobileView = () => (
+        <div className="md:hidden space-y-4">
+            {incomes && incomes.length > 0 ? (
+                incomes.map((income) => (
+                    <Card key={income.id}>
+                        <CardHeader>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <CardTitle className="text-lg">{income.description}</CardTitle>
+                                    <CardDescription>{format(new Date(income.date), 'MMM d, yyyy')}</CardDescription>
+                                </div>
+                                <Button variant="ghost" size="icon" onClick={() => handleDeleteIncome(income.id)}>
+                                    <X className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="flex justify-between items-center">
+                             <Badge variant="outline">{income.source}</Badge>
+                            <p className="text-lg font-bold">
+                                {income.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                            </p>
+                        </CardContent>
+                    </Card>
+                ))
+            ) : (
+                <Card>
+                    <CardContent className="pt-6">
+                        <p className="text-center text-muted-foreground">No income recorded for this month.</p>
+                    </CardContent>
+                </Card>
+            )}
+        </div>
+    );
+
+    const renderDesktopView = () => (
+         <Card className="hidden md:block">
+            <CardHeader>
+                <CardTitle>This Month's Income</CardTitle>
+                <CardDescription>A list of your income for the current month.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Source</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading ? (
+                            [...Array(5)].map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : incomes && incomes.length > 0 ? (
+                            incomes.map((income) => (
+                                <TableRow key={income.id}>
+                                    <TableCell className="font-medium">{income.description}</TableCell>
+                                    <TableCell>
+                                        <Badge variant="outline">{income.source}</Badge>
+                                    </TableCell>
+                                    <TableCell>{format(new Date(income.date), 'MMM d, yyyy')}</TableCell>
+                                    <TableCell className="text-right">
+                                        {income.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDeleteIncome(income.id)}>
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center">No income recorded for this month.</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+    );
 
     return (
         <>
@@ -85,56 +172,16 @@ export default function IncomePage() {
                     </Dialog>
                 }
             />
-            <Card>
-                <CardHeader>
-                    <CardTitle>This Month's Income</CardTitle>
-                    <CardDescription>A list of your income for the current month.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Description</TableHead>
-                                <TableHead>Source</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead className="text-right">Amount</TableHead>
-                                <TableHead className="w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? (
-                                [...Array(5)].map((_, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell colSpan={5}><Skeleton className="h-8 w-full" /></TableCell>
-                                    </TableRow>
-                                ))
-                            ) : incomes && incomes.length > 0 ? (
-                                incomes.map((income) => (
-                                    <TableRow key={income.id}>
-                                        <TableCell className="font-medium">{income.description}</TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline">{income.source}</Badge>
-                                        </TableCell>
-                                        <TableCell>{format(new Date(income.date), 'MMM d, yyyy')}</TableCell>
-                                        <TableCell className="text-right">
-                                            {income.amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' })}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button variant="ghost" size="icon" onClick={() => handleDeleteIncome(income.id)}>
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={5} className="text-center">No income recorded for this month.</TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            {isLoading && !incomes ? (
+                <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full" />)}
+                </div>
+            ) : (
+                <>
+                    {renderMobileView()}
+                    {renderDesktopView()}
+                </>
+            )}
         </>
     );
 }
