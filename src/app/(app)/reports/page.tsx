@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { AiReportCard } from './components/ai-report-card';
 import { IncomeExpenseSummary } from './components/income-expense-summary';
+import { InvestmentSummary } from './components/investment-summary';
 import { useCollection, useFirebase, useMemoFirebase } from '@/firebase';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
@@ -156,9 +157,12 @@ export default function ReportsPage() {
                 }
             />
 
-            <div className="grid gap-6 lg:grid-cols-5">
-                <div className="lg:col-span-3">
+            <div className="grid gap-6 lg:grid-cols-2">
+                <div className="lg:col-span-2">
                     <IncomeExpenseSummary />
+                </div>
+                 <div className="lg:col-span-2">
+                    <InvestmentSummary />
                 </div>
                 <div className="lg:col-span-2">
                     <AiReportCard />
