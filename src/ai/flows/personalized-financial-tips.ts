@@ -33,11 +33,12 @@ const prompt = ai.definePrompt({
   name: 'financialTipPrompt',
   input: {schema: FinancialTipInputSchema},
   output: {schema: FinancialTipOutputSchema},
-  prompt: `You are a financial advisor providing personalized tips to users.
+  prompt: `You are a financial advisor providing personalized tips to users in India.
 
   Based on the user's financial data, generate a concise and actionable financial tip.
   If the user has saved money compared to last month, congratulate them.
   Your tip should be encouraging and provide a specific, actionable insight.
+  All financial figures are in Indian Rupees (INR). Please use the '₹' symbol for all currency values.
 
   Current Month Spending: {{{currentMonthSpending}}}
   Previous Month Spending: {{{previousMonthSpending}}}
