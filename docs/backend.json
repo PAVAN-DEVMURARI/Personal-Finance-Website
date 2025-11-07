@@ -218,6 +218,48 @@
         "purchasePrice",
         "purchaseDate"
       ]
+    },
+    "Debt": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Debt",
+      "type": "object",
+      "description": "Represents money lent to or borrowed from a friend.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Debt entity."
+        },
+        "userProfileId": {
+          "type": "string",
+          "description": "Reference to UserProfile."
+        },
+        "friendName": {
+          "type": "string",
+          "description": "The name of the friend involved in the transaction."
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of money."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of transaction.",
+          "enum": ["lent", "borrowed"]
+        },
+        "date": {
+          "type": "string",
+          "description": "The date of the transaction.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userProfileId",
+        "friendName",
+        "amount",
+        "type",
+        "date"
+      ]
     }
   },
   "auth": {
@@ -339,9 +381,28 @@
             }
           ]
         }
+      },
+      {
+        "path": "/users/{userId}/debts/{debtId}",
+        "definition": {
+          "entityName": "Debt",
+          "schema": {
+            "$ref": "#/backend/entities/Debt"
+          },
+          "description": "Stores debt records for a specific user, tracking money lent or borrowed. Accessible only to the user with the matching userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique ID of the user, matching the Firebase Auth UID."
+            },
+            {
+              "name": "debtId",
+              "description": "The unique ID of the debt record."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, DBAC, and support secure list operations (QAPs). User data is segregated to ensure that each collection has a homogeneous security posture.\n\n1.  **User Profiles:** User profiles are stored in a path-based structure under `/users/{userId}`. This ensures that only the authenticated user can access their profile data. No denormalization is required as access is determined solely by the path.\n2.  **Expenses, Income, SavingsGoals, Investments:**  These entities are stored as subcollections under the user's document (e.g., `/users/{userId}/expenses/{expenseId}`). This enforces clear ownership. Access is determined by the `userId` in the path, ensuring Authorization Independence. Since these collections are user-specific and path-based, no further denormalization is required for authorization.\n3.  **Categories:** Categories are stored in a top-level collection `/categories`.  To manage access, we could implement a `members` map with roles, but this isn't strictly necessary given the application details.  It's assumed these are global.\n\nThis structure achieves Authorization Independence by avoiding `get()` calls in the rules. The path-based ownership model for user-specific data (`/users/{userId}/*`) makes it easy to write security rules that only allow authenticated users to access their own data. The segregation of data into user-specific subcollections supports the QAPs by enabling secure list operations; a user can only list the documents within their own subcollections."
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, DBAC, and support secure list operations (QAPs). User data is segregated to ensure that each collection has a homogeneous security posture.\n\n1.  **User Profiles:** User profiles are stored in a path-based structure under `/users/{userId}`. This ensures that only the authenticated user can access their profile data. No denormalization is required as access is determined solely by the path.\n2.  **Expenses, Income, SavingsGoals, Investments, Debts:**  These entities are stored as subcollections under the user's document (e.g., `/users/{userId}/expenses/{expenseId}`). This enforces clear ownership. Access is determined by the `userId` in the path, ensuring Authorization Independence. Since these collections are user-specific and path-based, no further denormalization is required for authorization.\n3.  **Categories:** Categories are stored in a top-level collection `/categories`.  To manage access, we could implement a `members` map with roles, but this isn't strictly necessary given the application details.  It's assumed these are global.\n\nThis structure achieves Authorization Independence by avoiding `get()` calls in the rules. The path-based ownership model for user-specific data (`/users/{userId}/*`) makes it easy to write security rules that only allow authenticated users to access their own data. The segregation of data into user-specific subcollections supports the QAPs by enabling secure list operations; a user can only list the documents within their own subcollections."
   }
 }
-    

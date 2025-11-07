@@ -7,6 +7,7 @@ import {
   Target,
   TrendingUp,
   Wallet,
+  HandCoins,
 } from 'lucide-react';
 import { AppShell } from './app-shell';
 import { cn } from '@/lib/utils';
@@ -19,6 +20,7 @@ const navItems = [
   { href: '/income', icon: Landmark, label: 'Income' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/investments', icon: TrendingUp, label: 'Investments' },
+  { href: '/debts', icon: HandCoins, label: 'Debts' },
   { href: '/reports', icon: FileText, label: 'Reports' },
 ];
 

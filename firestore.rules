@@ -7,7 +7,7 @@
  * as we assume they are global.
  *
  * Data Structure:
- * - User profiles and associated data (expenses, income, savings goals, investments)
+ * - User profiles and associated data (expenses, income, savings goals, investments, debts)
  *   are nested under /users/{userId}, ensuring data isolation.
  * - Categories are stored in a top-level /categories collection.
  *
@@ -111,6 +111,21 @@ service cloud.firestore {
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId}/investments/{investmentId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if isSignedIn() && isOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;
+      allow update: if isSignedIn() && isOwner(userId) && resource.data.userProfileId == userId;
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+    
+    /**
+     * @description Enforces access control for user debts. Only the authenticated user can manage their own debts.
+     * @path /users/{userId}/debts/{debtId}
+     * @allow (create, update, delete, get, list) - User with UID 'user123' can manage their own debt record at /users/user123/debts/debt001.
+     * @deny (create, update, delete, get, list) - User with UID 'user456' cannot access debt at /users/user123/debts/debt001.
+     * @principle Enforces document ownership for all operations.
+     */
+    match /users/{userId}/debts/{debtId} {
       allow get: if isSignedIn() && isOwner(userId);
       allow list: if isSignedIn() && isOwner(userId);
       allow create: if isSignedIn() && isOwner(userId) && request.resource.data.userProfileId == userId;

@@ -41,16 +41,35 @@ export function StatsCards() {
     );
   }, [firestore, user?.uid, monthStart, monthEnd]);
 
+  const debtsQuery = useMemoFirebase(() => {
+    if (!firestore || !user?.uid) return null;
+    return query(
+        collection(firestore, 'users', user.uid, 'debts'),
+        where('date', '>=', monthStart.toISOString()),
+        where('date', '<=', monthEnd.toISOString())
+    );
+  }, [firestore, user?.uid, monthStart, monthEnd]);
+
   const { data: expenses, isLoading: expensesLoading } = useCollection(expensesQuery);
   const { data: income, isLoading: incomeLoading } = useCollection(incomeQuery);
   const { data: investments, isLoading: investmentsLoading } = useCollection(investmentsQuery);
+  const { data: debts, isLoading: debtsLoading } = useCollection(debtsQuery);
 
   const totalIncome = useMemo(() => income?.reduce((acc, t) => acc + t.amount, 0) || 0, [income]);
   const totalExpenses = useMemo(() => expenses?.reduce((acc, t) => acc + t.amount, 0) || 0, [expenses]);
   const totalInvestments = useMemo(() => investments?.reduce((acc, inv) => acc + inv.purchasePrice, 0) || 0, [investments]);
-  const netBalance = totalIncome - totalExpenses - totalInvestments;
+  
+  const { borrowed, lent } = useMemo(() => {
+    return (debts || []).reduce((acc, debt) => {
+        if (debt.type === 'borrowed') acc.borrowed += debt.amount;
+        if (debt.type === 'lent') acc.lent += debt.amount;
+        return acc;
+    }, { borrowed: 0, lent: 0 });
+  }, [debts]);
 
-  const isLoading = expensesLoading || incomeLoading || investmentsLoading;
+  const netBalance = (totalIncome + borrowed) - (totalExpenses + totalInvestments + lent);
+
+  const isLoading = expensesLoading || incomeLoading || investmentsLoading || debtsLoading;
 
   const stats = [
     { title: "This Month's Income", amount: totalIncome, icon: ArrowUpRight, color: "text-green-500" },
