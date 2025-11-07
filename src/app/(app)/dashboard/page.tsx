@@ -18,7 +18,7 @@ export default function DashboardPage() {
             <SpendingChart />
         </div>
         
-        <div className="col-span-1 md:col-span-1 lg:col-span-2">
+        <div className="col-span-1 md:col-span-2 lg:col-span-2">
             <FinancialTipCard />
         </div>
         
